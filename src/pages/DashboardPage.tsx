@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { transactions, outlets, products, categories, formatCurrency, formatDate, getTransactionsByOutlet } from '@/data/mockData';
+import { useTransactions } from '@/hooks/useTransactions';
+import { useOutlets } from '@/hooks/useOutlets';
+import { useActiveProducts } from '@/hooks/useProducts';
+import { useCategories } from '@/hooks/useCategories';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import StatCard from '@/components/dashboard/StatCard';
 import {
   ShoppingCart,
@@ -43,15 +47,21 @@ export default function DashboardPage() {
   const isAdmin = user?.role === 'admin';
   
   // Admin filters
-  const [selectedOutlet, setSelectedOutlet] = useState<string>('all');
+  const [selectedOutlet, setSelectedOutlet] = useState<string>(isAdmin ? 'all' : (user?.outletId || ''));
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // Get transactions based on role and filter
+  // Fetch real data
+  const { data: transactions = [], isLoading: txLoading } = useTransactions(selectedOutlet);
+  const { data: outlets = [] } = useOutlets();
+  const { data: products = [] } = useActiveProducts();
+  const { data: categories = [] } = useCategories();
+  
+  const isLoading = txLoading;
+
+  // Apply extra filters to transactions
   const getFilteredTransactions = () => {
-    let txList = isAdmin 
-      ? getTransactionsByOutlet(selectedOutlet) 
-      : getTransactionsByOutlet(user?.outletId || '');
+    let txList = [...transactions];
     
     // Apply date filters
     if (startDate) {
@@ -130,6 +140,14 @@ export default function DashboardPage() {
     { day: 'Min', sales: 0 },
   ];
 
+  // Fill chart data
+  filteredTransactions.forEach(tx => {
+    const day = tx.createdAt.getDay(); // 0 is Sunday, 1 is Monday...
+    const dayMap = [6, 0, 1, 2, 3, 4, 5]; // Map to our array index (Monday=0)
+    const index = dayMap[day];
+    dailySalesData[index].sales += tx.total;
+  });
+
   // Get outlet name for display
   const getOutletDisplayName = () => {
     if (isAdmin) {
@@ -139,6 +157,14 @@ export default function DashboardPage() {
     }
     return user?.outletName || '';
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -373,7 +399,7 @@ export default function DashboardPage() {
                   const outlet = outlets.find((o) => o.id === tx.outletId);
                   return (
                     <tr key={tx.id} className="border-b border-border/50">
-                      <td className="py-2 px-2 text-xs font-mono">{tx.id}</td>
+                      <td className="py-2 px-2 text-xs font-mono">{tx.transactionNumber}</td>
                       {isAdmin && (
                         <td className="py-2 px-2 text-xs">
                           {outlet?.name} - {outlet?.branchNumber}

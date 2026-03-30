@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { transactions, outlets, categories, formatCurrency, formatDate, getTransactionsByOutlet } from '@/data/mockData';
+import { useTransactions } from '@/hooks/useTransactions';
+import { useOutlets } from '@/hooks/useOutlets';
+import { useCategories } from '@/hooks/useCategories';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,26 +24,29 @@ export default function ReportsPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // Get transactions based on role
+  // Fetch real data
+  const { data: transactions = [], isLoading } = useTransactions(selectedOutlet);
+  const { data: outlets = [] } = useOutlets();
+  const { data: categories = [] } = useCategories();
+
+  // Get transactions based on filters
   const getFilteredTransactions = () => {
-    let txList = isAdmin 
-      ? getTransactionsByOutlet(selectedOutlet) 
-      : getTransactionsByOutlet(user?.outletId || '');
+    let txList = [...transactions];
     
     // Apply date filters
     if (startDate) {
       const start = new Date(startDate);
-      txList = txList.filter(tx => tx.createdAt >= start);
+      txList = txList.filter(tx => new Date(tx.createdAt) >= start);
     }
     if (endDate) {
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
-      txList = txList.filter(tx => tx.createdAt <= end);
+      txList = txList.filter(tx => new Date(tx.createdAt) <= end);
     }
     
     return txList;
   };
-
+  
   const filteredTransactions = getFilteredTransactions();
 
   const totalRevenue = filteredTransactions.reduce((sum, tx) => sum + tx.total, 0);
@@ -49,10 +55,10 @@ export default function ReportsPage() {
 
   // Build export data
   const exportData = filteredTransactions.flatMap((tx) => {
-    const outlet = outlets.find((o) => o.id === tx.outletId);
+    const outlet = tx.outlet;
     return tx.items.map((item) => ({
       Tanggal: formatDate(tx.createdAt),
-      'ID Transaksi': tx.id,
+      'ID Transaksi': tx.transactionNumber,
       Outlet: outlet?.name || '',
       Cabang: outlet?.branchNumber || '',
       Produk: item.productName,
@@ -171,6 +177,14 @@ export default function ReportsPage() {
     printWindow.document.close();
     printWindow.print();
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { transactions, outlets, formatCurrency, formatDate, getTransactionsByOutlet } from '@/data/mockData';
+import { useTransactions } from '@/hooks/useTransactions';
+import { useOutlets } from '@/hooks/useOutlets';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -28,20 +30,15 @@ export default function TransactionsPage() {
     isAdmin ? 'all' : (user?.outletId || '')
   );
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-
-  // Get transactions based on role
-  const getFilteredTransactions = () => {
-    const txList = isAdmin 
-      ? getTransactionsByOutlet(selectedOutlet) 
-      : getTransactionsByOutlet(user?.outletId || '');
-    
-    return txList.filter((tx) => {
-      const matchesSearch = tx.id.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesSearch;
-    });
-  };
-
-  const filteredTransactions = getFilteredTransactions();
+  
+  // Use real data hook
+  const { data: transactions = [], isLoading } = useTransactions(selectedOutlet);
+  const { data: outlets = [] } = useOutlets();
+  
+  const filteredTransactions = transactions.filter((tx) => {
+    const matchesSearch = tx.transactionNumber.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
+  });
 
   const handlePrint = () => {
     window.print();
@@ -111,10 +108,10 @@ export default function TransactionsPage() {
             </thead>
             <tbody>
               {filteredTransactions.map((tx) => {
-                const outlet = outlets.find((o) => o.id === tx.outletId);
+                const outlet = tx.outlet;
                 return (
                   <tr key={tx.id} className="border-b border-border/50 hover:bg-muted/30">
-                    <td className="py-2.5 px-4 text-xs font-mono">{tx.id}</td>
+                    <td className="py-2.5 px-4 text-xs font-mono">{tx.transactionNumber}</td>
                     {isAdmin && (
                       <td className="py-2.5 px-4 text-xs">
                         {outlet?.name} - {outlet?.branchNumber}
@@ -179,7 +176,7 @@ export default function TransactionsPage() {
                     {formatDate(selectedTransaction.createdAt)}
                   </p>
                   <p className="text-[10px] text-muted-foreground">
-                    #{selectedTransaction.id}
+                    #{selectedTransaction.transactionNumber}
                   </p>
                 </div>
 

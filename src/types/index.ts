@@ -53,6 +53,7 @@ export interface CartItem {
 
 export interface Transaction {
   id: string;
+  transactionNumber: string;
   outletId: string;
   outlet?: Outlet;
   items: TransactionItem[];
@@ -61,6 +62,7 @@ export interface Transaction {
   paymentMethod: 'cash';
   cashReceived: number;
   change: number;
+  cashierName?: string;
   createdAt: Date;
 }
 
