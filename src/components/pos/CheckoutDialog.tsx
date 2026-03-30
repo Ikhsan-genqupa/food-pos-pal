@@ -78,7 +78,17 @@ export default function CheckoutDialog({
     window.print();
   };
 
-  const quickAmounts = [50000, 100000, 150000, 200000];
+  const quickAmounts = [10000, 20000, 50000, 100000];
+
+  const formatInputNumber = (val: string) => {
+    if (!val) return '';
+    const num = val.replace(/\D/g, '');
+    return num.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  };
+
+  const parseInputNumber = (val: string) => {
+    return val.replace(/\D/g, '');
+  };
 
   const getPaymentLabel = (method: string) => {
     switch (method) {
@@ -301,10 +311,11 @@ export default function CheckoutDialog({
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-lg">Rp</span>
                   <Input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     placeholder="0"
-                    value={cashReceived}
-                    onChange={(e) => setCashReceived(e.target.value)}
+                    value={formatInputNumber(cashReceived)}
+                    onChange={(e) => setCashReceived(parseInputNumber(e.target.value))}
                     className="pl-12 h-14 text-2xl font-black rounded-xl border-2 focus-visible:ring-primary/20"
                     autoFocus
                   />
