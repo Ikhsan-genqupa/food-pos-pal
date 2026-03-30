@@ -227,27 +227,27 @@ export default function ReportsPage() {
           }
           .summary-item { text-align: center; flex: 1; }
           .summary-item:not(:last-child) { border-right: 1px solid #e5e7eb; }
-          .summary-item .value { font-size: 18px; font-weight: 700; color: #0d9488; margin-bottom: 2px; }
-          .summary-item .label { font-size: 8px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
+          .summary-item .value { font-size: 20px; font-weight: 700; color: #0d9488; margin-bottom: 2px; }
+          .summary-item .label { font-size: 9px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
           
-          .section-title { font-size: 10px; font-weight: 800; text-transform: uppercase; margin: 25px 0 10px; color: #374151; border-bottom: 2px solid #0d9488; display: inline-block; padding-bottom: 2px; }
+          .section-title { font-size: 11px; font-weight: 800; text-transform: uppercase; margin: 30px 0 12px; color: #374151; border-bottom: 2px solid #0d9488; display: inline-block; padding-bottom: 3px; }
           
           table { width: 100%; border-collapse: collapse; margin-top: 5px; border-radius: 8px; overflow: hidden; border-style: hidden; box-shadow: 0 0 0 1px #f3f4f6; table-layout: auto; }
           th { 
             background-color: #0d9488; 
             color: white; 
             text-align: left; 
-            padding: 6px 8px; 
-            font-size: 7px; 
+            padding: 8px 10px; 
+            font-size: 8.5px; 
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             white-space: nowrap;
           }
           td { 
-            padding: 6px 8px; 
+            padding: 7px 10px; 
             border-bottom: 1px solid #f3f4f6; 
-            font-size: 7px; 
+            font-size: 8.5px; 
             color: #374151;
             white-space: nowrap;
           }
@@ -259,22 +259,27 @@ export default function ReportsPage() {
             bottom: 0;
             left: 0;
             right: 0;
-            height: 60px;
-            text-align: center; 
+            height: 45px;
             font-size: 9px; 
             color: #9ca3af; 
             background: white;
             padding: 10px 30px;
             border-top: 1px solid #f3f4f6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             z-index: 100;
           }
-          .footer p { margin: 4px 0; }
+          .footer-left { text-align: left; }
+          .footer-right { text-align: right; }
+          .page-number:after { content: counter(page); }
+          .total-pages:after { content: counter(pages); }
           
           @media print {
             body { padding-top: 0; }
             .summary-container { -webkit-print-color-adjust: exact; background-color: #f9fafb !important; }
             th { -webkit-print-color-adjust: exact; background-color: #0d9488 !important; color: white !important; }
-            .footer { position: fixed; bottom: 0; }
+            .footer { position: fixed; bottom: 0; border-top: 1px solid #f3f4f6; }
           }
         </style>
       </head>
@@ -362,8 +367,12 @@ export default function ReportsPage() {
         </table>
 
         <div class="footer">
-          <p>Dicetak pada: ${new Date().toLocaleString('id-ID')}</p>
-          <p>GenQuPa POS &bull; Premium Business Intelligence System</p>
+          <div class="footer-left">
+            GenQuPa POS &bull; Premium Business Intelligence System
+          </div>
+          <div class="footer-right">
+            Dicetak pada: ${new Date().toLocaleString('id-ID')} HAL <span class="page-number"></span>/<span class="total-pages"></span>
+          </div>
         </div>
       </body>
       </html>

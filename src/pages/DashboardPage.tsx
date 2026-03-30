@@ -130,23 +130,40 @@ export default function DashboardPage() {
   const totalCategorySales = categoryData.reduce((sum, cat) => sum + cat.value, 0);
 
   // Daily sales chart data
-  const dailySalesData = [
-    { day: 'Sen', sales: 0 },
-    { day: 'Sel', sales: 0 },
-    { day: 'Rab', sales: 0 },
-    { day: 'Kam', sales: 0 },
-    { day: 'Jum', sales: 0 },
-    { day: 'Sab', sales: 0 },
-    { day: 'Min', sales: 0 },
-  ];
+  const dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+  const dayMap = [6, 0, 1, 2, 3, 4, 5]; // Sunday=0 -> index 6, Monday=1 -> index 0
+
+  const dailySalesData = dayNames.map(day => ({ 
+    day, 
+    total: 0,
+    // Add dynamic keys for each outlet if in "all" mode
+    ...(isAdmin && selectedOutlet === 'all' 
+      ? outlets.reduce((acc, o) => ({ ...acc, [o.id]: 0 }), {}) 
+      : { sales: 0 })
+  }));
 
   // Fill chart data
   filteredTransactions.forEach(tx => {
-    const day = tx.createdAt.getDay(); // 0 is Sunday, 1 is Monday...
-    const dayMap = [6, 0, 1, 2, 3, 4, 5]; // Map to our array index (Monday=0)
-    const index = dayMap[day];
-    dailySalesData[index].sales += tx.total;
+    const dayIndex = dayMap[tx.createdAt.getDay()];
+    if (isAdmin && selectedOutlet === 'all') {
+      const outletId = tx.outletId;
+      if (dailySalesData[dayIndex][outletId] !== undefined) {
+        dailySalesData[dayIndex][outletId] += tx.total;
+      }
+      dailySalesData[dayIndex].total += tx.total;
+    } else {
+      dailySalesData[dayIndex].sales += tx.total;
+      dailySalesData[dayIndex].total += tx.total;
+    }
   });
+
+  const outletColors = [
+    '#0d9488', // Teal
+    '#0ea5e9', // Sky
+    '#f59e0b', // Amber
+    '#8b5cf6', // Violet
+    '#ec4899', // Pink
+  ];
 
   // Get outlet name for display
   const getOutletDisplayName = () => {
@@ -279,13 +296,31 @@ export default function DashboardPage() {
                     borderRadius: '6px',
                     fontSize: '12px',
                   }}
-                  formatter={(value: number) => [formatCurrency(value), 'Penjualan']}
+                  formatter={(value: number, name: string) => {
+                    const outletName = isAdmin && selectedOutlet === 'all' 
+                      ? outlets.find(o => o.id === name)?.name || name
+                      : 'Penjualan';
+                    return [formatCurrency(value), outletName];
+                  }}
                 />
-                <Bar
-                  dataKey="sales"
-                  fill="hsl(var(--primary))"
-                  radius={[4, 4, 0, 0]}
-                />
+                {isAdmin && selectedOutlet === 'all' ? (
+                  outlets.map((outlet, index) => (
+                    <Bar
+                      key={outlet.id}
+                      dataKey={outlet.id}
+                      name={outlet.name}
+                      stackId="a"
+                      fill={outletColors[index % outletColors.length]}
+                      radius={[0, 0, 0, 0]}
+                    />
+                  ))
+                ) : (
+                  <Bar
+                    dataKey="sales"
+                    fill="hsl(var(--primary))"
+                    radius={[4, 4, 0, 0]}
+                  />
+                )}
               </BarChart>
             </ResponsiveContainer>
           </div>
