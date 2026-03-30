@@ -57,8 +57,9 @@ export default function StockPage() {
     
     // Filter by search query and remove bundles
     return stockList.filter((stock) => {
-      const matchesSearch = stock.product?.name.toLowerCase().includes(searchQuery.toLowerCase());
-      const isNotBundle = !stock.product?.isBundle;
+      const productName = stock.product?.name || '';
+      const matchesSearch = productName.toLowerCase().includes(searchQuery.toLowerCase());
+      const isNotBundle = stock.product?.isBundle !== true;
       return matchesSearch && isNotBundle;
     });
   };

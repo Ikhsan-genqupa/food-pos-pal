@@ -30,10 +30,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       return [...prev, { product, quantity }];
     });
-    toast({
-      title: 'Added to cart',
-      description: `${product.name} x${quantity}`,
-    });
   };
 
   const removeItem = (productId: string) => {

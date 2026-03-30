@@ -12,18 +12,8 @@ export function useStocks(outletId?: string) {
         .select(`
           *,
           products (
-            id,
-            name,
-            price,
-            image_url,
-            is_active,
-            is_bundle,
-            category_id,
-            categories (
-              id,
-              name,
-              icon
-            )
+            *,
+            categories (*)
           ),
           outlets (
             id,
@@ -40,38 +30,44 @@ export function useStocks(outletId?: string) {
 
       if (error) throw error;
 
-      return data.map((s) => ({
-        id: s.id,
-        productId: s.product_id,
-        product: s.products ? {
-          id: s.products.id,
-          name: s.products.name,
-          price: Number(s.products.price),
-          image: s.products.image_url || '/placeholder.svg',
-          categoryId: s.products.category_id || '',
-          category: s.products.categories ? {
-            id: s.products.categories.id,
-            name: s.products.categories.name,
-            icon: s.products.categories.icon || undefined,
+      return data.map((s) => {
+        const product = Array.isArray(s.products) ? s.products[0] : s.products;
+        const outlet = Array.isArray(s.outlets) ? s.outlets[0] : s.outlets;
+        const categories = product ? (Array.isArray(product.categories) ? product.categories[0] : product.categories) : null;
+
+        return {
+          id: s.id,
+          productId: s.product_id,
+          product: product ? {
+            id: product.id,
+            name: product.name,
+            price: Number(product.price),
+            image: product.image_url || '/placeholder.svg',
+            categoryId: product.category_id || '',
+            category: categories ? {
+              id: categories.id,
+              name: categories.name,
+              icon: categories.icon || undefined,
+            } : undefined,
+            createdAt: new Date(),
+            isActive: product.is_active,
+            isBundle: product.is_bundle === true,
           } : undefined,
-          createdAt: new Date(),
-          isActive: s.products.is_active,
-          isBundle: s.products.is_bundle,
-        } : undefined,
-        outletId: s.outlet_id,
-        outlet: s.outlets ? {
-          id: s.outlets.id,
-          name: s.outlets.name,
-          branchNumber: s.outlets.branch_number,
-          address: '',
-          personInCharge: '',
-          username: '',
-          createdAt: new Date(),
-          isActive: true,
-        } : undefined,
-        quantity: s.quantity,
-        lastUpdated: new Date(s.updated_at),
-      }));
+          outletId: s.outlet_id,
+          outlet: outlet ? {
+            id: outlet.id,
+            name: outlet.name,
+            branchNumber: outlet.branch_number,
+            address: '',
+            personInCharge: '',
+            username: '',
+            createdAt: new Date(),
+            isActive: true,
+          } : undefined,
+          quantity: s.quantity,
+          lastUpdated: new Date(s.updated_at),
+        };
+      });
     },
   });
 }
