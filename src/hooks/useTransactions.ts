@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Transaction, TransactionItem } from '@/types';
+import { Transaction, TransactionItem, PaymentMethod } from '@/types';
 import { toast } from '@/hooks/use-toast';
 
 export interface CreateTransactionInput {
@@ -8,6 +8,7 @@ export interface CreateTransactionInput {
   items: TransactionItem[];
   subtotal: number;
   total: number;
+  paymentMethod: PaymentMethod;
   cashReceived: number;
   change: number;
   cashierName?: string;
@@ -75,7 +76,7 @@ export function useTransactions(outletId?: string) {
         })),
         subtotal: Number(t.subtotal),
         total: Number(t.total),
-        paymentMethod: t.payment_method as 'cash',
+        paymentMethod: t.payment_method as PaymentMethod,
         cashReceived: Number(t.cash_received),
         change: Number(t.change_amount),
         cashierName: t.cashier_name,
@@ -101,7 +102,7 @@ export function useCreateTransaction() {
           outlet_id: input.outletId,
           subtotal: input.subtotal,
           total: input.total,
-          payment_method: 'cash',
+          payment_method: input.paymentMethod || 'tunai',
           cash_received: input.cashReceived,
           change_amount: input.change,
           cashier_name: input.cashierName,

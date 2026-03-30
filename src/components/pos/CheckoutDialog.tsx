@@ -350,7 +350,7 @@ export default function CheckoutDialog({
           {paymentMethod !== 'tunai' && (
             <div className="bg-muted/30 rounded-2xl p-4 border border-border/50 border-dashed text-center animate-in zoom-in-95 duration-500">
               <p className="text-xs text-muted-foreground italic flex items-center justify-center gap-2">
-                <Check className="h-4 w-4 text-success" /> Konfirmasi pembayaran ${getPaymentLabel(paymentMethod)} selesai
+                <Check className="h-4 w-4 text-success" /> Konfirmasi pembayaran {getPaymentLabel(paymentMethod)} selesai
               </p>
             </div>
           )}

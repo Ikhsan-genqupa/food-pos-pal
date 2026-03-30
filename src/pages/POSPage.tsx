@@ -46,6 +46,7 @@ export default function POSPage() {
       items: transaction.items,
       subtotal: transaction.subtotal,
       total: transaction.total,
+      paymentMethod: transaction.paymentMethod,
       cashReceived: transaction.cashReceived,
       change: transaction.change,
       cashierName: user?.email,

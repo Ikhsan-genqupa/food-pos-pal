@@ -58,8 +58,11 @@ export default function ReportsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('all');
 
-  const getPaymentLabel = (method: string) => {
-    switch (method.toLowerCase()) {
+  const getPaymentLabel = (method: string | undefined | null) => {
+    if (!method) return '-';
+    const m = String(method).toLowerCase();
+    switch (m) {
+      case 'cash':
       case 'tunai': return 'Tunai';
       case 'qris': return 'QRIS';
       case 'ovo': return 'OVO';
@@ -67,7 +70,7 @@ export default function ReportsPage() {
       case 'dana': return 'Dana';
       case 'debit': return 'Debit';
       case 'kredit': return 'Kredit';
-      default: return method.toUpperCase();
+      default: return m.toUpperCase();
     }
   };
 
@@ -475,10 +478,11 @@ export default function ReportsPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/50">
-                <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground">Tanggal</th>
-                <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground">Metode</th>
-                <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground">Outlet</th>
-                <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground">Produk</th>
+                <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground whitespace-nowrap">Tanggal</th>
+                <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground whitespace-nowrap">ID Transaksi</th>
+                <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground whitespace-nowrap">Metode</th>
+                <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground whitespace-nowrap">Outlet</th>
+                <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground whitespace-nowrap">Produk</th>
                 <th className="text-center py-2.5 px-4 text-xs font-medium text-muted-foreground">Jml</th>
                 <th className="text-right py-2.5 px-4 text-xs font-medium text-muted-foreground">Harga</th>
                 <th className="text-right py-2.5 px-4 text-xs font-medium text-muted-foreground">Total</th>
@@ -487,13 +491,14 @@ export default function ReportsPage() {
             <tbody>
               {exportData.slice(0, 50).map((row, idx) => (
                 <tr key={idx} className="border-b border-border/50 hover:bg-muted/30">
-                  <td className="py-2.5 px-4 text-xs">{row.Tanggal}</td>
-                  <td className="py-2.5 px-4 text-xs font-bold text-teal-600">{row.Metode}</td>
-                  <td className="py-2.5 px-4 text-xs">{row.Outlet}</td>
-                  <td className="py-2.5 px-4 text-xs">{row.Produk}</td>
-                  <td className="py-2.5 px-4 text-xs text-center">{row.Jumlah}</td>
-                  <td className="py-2.5 px-4 text-xs text-right">{formatCurrency(row.Harga)}</td>
-                  <td className="py-2.5 px-4 text-xs text-right font-medium">{formatCurrency(row.Total)}</td>
+                  <td className="py-2.5 px-4 text-[10px] whitespace-nowrap">{row.Tanggal}</td>
+                  <td className="py-2.5 px-4 text-[10px] font-mono text-muted-foreground">{row['ID Transaksi']}</td>
+                  <td className="py-2.5 px-4 text-[10px] font-bold text-teal-600 uppercase">{row.Metode}</td>
+                  <td className="py-2.5 px-4 text-[10px] truncate max-w-[120px]">{row.Outlet}</td>
+                  <td className="py-2.5 px-4 text-[10px] font-medium">{row.Produk}</td>
+                  <td className="py-2.5 px-4 text-[10px] text-center font-bold">{row.Jumlah}</td>
+                  <td className="py-2.5 px-4 text-[10px] text-right">{formatCurrency(row.Harga)}</td>
+                  <td className="py-2.5 px-4 text-[10px] text-right font-bold text-teal-700">{formatCurrency(row.Total)}</td>
                 </tr>
               ))}
             </tbody>
