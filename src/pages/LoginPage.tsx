@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
 
-const INTERNAL_DOMAIN = '@genqupa.internal';
+const INTERNAL_DOMAIN = '@pos.local';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -31,7 +31,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     // Convert username to internal email format
-    const email = username.toLowerCase().replace(/\s+/g, '') + INTERNAL_DOMAIN;
+    const email = username.toLowerCase().replace(/[^a-z0-9]/g, '') + INTERNAL_DOMAIN;
 
     const result = await login(email, password);
 
