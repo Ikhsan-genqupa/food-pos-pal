@@ -14,16 +14,289 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      outlets: {
+        Row: {
+          address: string
+          branch_number: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          person_in_charge: string
+          username: string
+        }
+        Insert: {
+          address?: string
+          branch_number: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          person_in_charge?: string
+          username?: string
+        }
+        Update: {
+          address?: string
+          branch_number?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          person_in_charge?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          price: number
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          price?: number
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          outlet_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          outlet_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          outlet_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_outlet_id_fkey"
+            columns: ["outlet_id"]
+            isOneToOne: false
+            referencedRelation: "outlets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stocks: {
+        Row: {
+          id: string
+          outlet_id: string
+          product_id: string
+          quantity: number
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          outlet_id: string
+          product_id: string
+          quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          outlet_id?: string
+          product_id?: string
+          quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stocks_outlet_id_fkey"
+            columns: ["outlet_id"]
+            isOneToOne: false
+            referencedRelation: "outlets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stocks_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transaction_items: {
+        Row: {
+          id: string
+          price: number
+          product_id: string | null
+          product_name: string
+          quantity: number
+          total: number
+          transaction_id: string
+        }
+        Insert: {
+          id?: string
+          price?: number
+          product_id?: string | null
+          product_name: string
+          quantity?: number
+          total?: number
+          transaction_id: string
+        }
+        Update: {
+          id?: string
+          price?: number
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          total?: number
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_items_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transactions: {
+        Row: {
+          cash_received: number
+          cashier_name: string | null
+          change_amount: number
+          created_at: string
+          id: string
+          outlet_id: string | null
+          payment_method: string
+          subtotal: number
+          total: number
+          transaction_number: string
+        }
+        Insert: {
+          cash_received?: number
+          cashier_name?: string | null
+          change_amount?: number
+          created_at?: string
+          id?: string
+          outlet_id?: string | null
+          payment_method?: string
+          subtotal?: number
+          total?: number
+          transaction_number: string
+        }
+        Update: {
+          cash_received?: number
+          cashier_name?: string | null
+          change_amount?: number
+          created_at?: string
+          id?: string
+          outlet_id?: string | null
+          payment_method?: string
+          subtotal?: number
+          total?: number
+          transaction_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_outlet_id_fkey"
+            columns: ["outlet_id"]
+            isOneToOne: false
+            referencedRelation: "outlets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      clean_invalid_stocks: { Args: never; Returns: Json }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "kasir" | "outlet"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +423,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "kasir", "outlet"],
+    },
   },
 } as const
