@@ -87,12 +87,12 @@ export default function ImageUploader({ value, onChange }: ImageUploaderProps) {
         title: 'Berhasil',
         description: 'Gambar berhasil diupload',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload error:', error);
       setPreview(null);
       toast({
         title: 'Error',
-        description: 'Gagal mengupload gambar',
+        description: error.message || 'Gagal mengupload gambar',
         variant: 'destructive',
       });
     } finally {
