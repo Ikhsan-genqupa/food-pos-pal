@@ -55,10 +55,11 @@ export default function StockPage() {
       stockList = stockList.filter(s => s.outletId === user.outletId);
     }
     
-    // Filter by search query
+    // Filter by search query and remove bundles
     return stockList.filter((stock) => {
       const matchesSearch = stock.product?.name.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesSearch;
+      const isNotBundle = !stock.product?.isBundle;
+      return matchesSearch && isNotBundle;
     });
   };
 

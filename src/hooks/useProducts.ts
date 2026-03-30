@@ -12,6 +12,8 @@ export interface CreateProductInput {
 
 export interface UpdateProductInput extends Partial<CreateProductInput> {
   isActive?: boolean;
+  isBundle?: boolean;
+  bundleItems?: { productId: string; quantity: number }[];
 }
 
 export function useProducts() {
@@ -43,6 +45,8 @@ export function useProducts() {
         } : undefined,
         image: p.image_url || '/placeholder.svg',
         price: Number(p.price),
+        isBundle: p.is_bundle,
+        bundleItems: p.bundle_items as { productId: string; quantity: number }[] | undefined,
         createdAt: new Date(p.created_at),
         isActive: p.is_active,
       }));
@@ -80,6 +84,8 @@ export function useActiveProducts() {
         } : undefined,
         image: p.image_url || '/placeholder.svg',
         price: Number(p.price),
+        isBundle: p.is_bundle,
+        bundleItems: p.bundle_items as { productId: string; quantity: number }[] | undefined,
         createdAt: new Date(p.created_at),
         isActive: p.is_active,
       }));
@@ -91,7 +97,7 @@ export function useCreateProduct() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: CreateProductInput) => {
+    mutationFn: async (input: CreateProductInput & { isBundle?: boolean; bundleItems?: { productId: string; quantity: number }[] }) => {
       const { data, error } = await supabase
         .from('products')
         .insert({
@@ -99,6 +105,8 @@ export function useCreateProduct() {
           category_id: input.categoryId,
           price: input.price,
           image_url: input.imageUrl || null,
+          is_bundle: input.isBundle || false,
+          bundle_items: input.bundleItems || [],
         })
         .select()
         .single();
@@ -142,12 +150,14 @@ export function useUpdateProduct() {
 
   return useMutation({
     mutationFn: async ({ id, ...input }: UpdateProductInput & { id: string }) => {
-      const updateData: Record<string, unknown> = {};
+      const updateData: any = {};
       if (input.name !== undefined) updateData.name = input.name;
       if (input.categoryId !== undefined) updateData.category_id = input.categoryId;
       if (input.price !== undefined) updateData.price = input.price;
       if (input.imageUrl !== undefined) updateData.image_url = input.imageUrl;
       if (input.isActive !== undefined) updateData.is_active = input.isActive;
+      if (input.isBundle !== undefined) updateData.is_bundle = input.isBundle;
+      if (input.bundleItems !== undefined) updateData.bundle_items = input.bundleItems;
 
       const { error } = await supabase
         .from('products')
@@ -163,7 +173,7 @@ export function useUpdateProduct() {
         description: 'Produk berhasil diperbarui',
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: 'Error',
         description: error.message,

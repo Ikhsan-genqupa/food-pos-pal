@@ -47,11 +47,20 @@ export default function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [sortBy, setSortBy] = useState<string>('newest');
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    categoryId: string;
+    price: string;
+    imageUrl: string;
+    isBundle: boolean;
+    bundleItems: { productId: string; quantity: number }[];
+  }>({
     name: '',
     categoryId: '',
     price: '',
     imageUrl: '',
+    isBundle: false,
+    bundleItems: [],
   });
 
   const filteredProducts = products.filter((product) => {
@@ -67,7 +76,14 @@ export default function ProductsPage() {
   });
 
   const resetForm = () => {
-    setFormData({ name: '', categoryId: '', price: '', imageUrl: '' });
+    setFormData({ 
+      name: '', 
+      categoryId: '', 
+      price: '', 
+      imageUrl: '', 
+      isBundle: false, 
+      bundleItems: [] 
+    });
     setEditingProduct(null);
   };
 
@@ -79,6 +95,8 @@ export default function ProductsPage() {
         categoryId: product.categoryId,
         price: product.price.toString(),
         imageUrl: product.image || '',
+        isBundle: product.isBundle || false,
+        bundleItems: product.bundleItems || [],
       });
     } else {
       resetForm();
@@ -94,6 +112,8 @@ export default function ProductsPage() {
       categoryId: formData.categoryId,
       price: parseFloat(formData.price),
       imageUrl: formData.imageUrl || undefined,
+      isBundle: formData.isBundle,
+      bundleItems: formData.isBundle ? formData.bundleItems : [],
     };
 
     if (editingProduct) {
@@ -105,6 +125,27 @@ export default function ProductsPage() {
     setDialogOpen(false);
     resetForm();
   };
+
+  const addBundleItem = () => {
+    setFormData({
+      ...formData,
+      bundleItems: [...formData.bundleItems, { productId: '', quantity: 1 }],
+    });
+  };
+
+  const removeBundleItem = (index: number) => {
+    const newItems = [...formData.bundleItems];
+    newItems.splice(index, 1);
+    setFormData({ ...formData, bundleItems: newItems });
+  };
+
+  const updateBundleItem = (index: number, field: 'productId' | 'quantity', value: string | number) => {
+    const newItems = [...formData.bundleItems];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setFormData({ ...formData, bundleItems: newItems });
+  };
+
+  const availableComponents = products.filter(p => !p.isBundle);
 
   const handleDeleteProduct = async () => {
     if (productToDelete) {
@@ -214,6 +255,11 @@ export default function ProductsPage() {
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
+                {product.isBundle && (
+                  <div className="absolute top-2 left-2 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                    Paket
+                  </div>
+                )}
               </div>
               <div className="p-3">
                 <div className="text-xs text-muted-foreground mb-1">
@@ -247,52 +293,142 @@ export default function ProductsPage() {
               {editingProduct ? 'Edit Produk' : 'Tambah Produk'}
             </DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nama Produk</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-              />
-            </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nama Produk</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="category">Kategori</Label>
-              <Select
-                value={formData.categoryId}
-                onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih kategori" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.icon} {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="category">Kategori</Label>
+                  <Select
+                    value={formData.categoryId}
+                    onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih kategori" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.icon} {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="price">Harga</Label>
-              <Input
-                id="price"
-                type="number"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                required
-                min="0"
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="price">Harga</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    required
+                    min="0"
+                  />
+                </div>
+              </div>
 
-            <ImageUploader
-              value={formData.imageUrl}
-              onChange={(url) => setFormData({ ...formData, imageUrl: url })}
-            />
+              <div className="space-y-2">
+                <Label>Tipe Produk</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant={formData.isBundle ? 'outline' : 'default'}
+                    className="h-9 text-xs"
+                    onClick={() => setFormData({ ...formData, isBundle: false })}
+                  >
+                    Produk Biasa
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={formData.isBundle ? 'default' : 'outline'}
+                    className="h-9 text-xs"
+                    onClick={() => setFormData({ ...formData, isBundle: true })}
+                  >
+                    Paket (Bundle)
+                  </Button>
+                </div>
+              </div>
+
+              {formData.isBundle && (
+                <div className="space-y-3 p-4 bg-muted/30 rounded-lg border border-dashed border-border">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs uppercase font-bold text-muted-foreground">Item dalam Paket</Label>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={addBundleItem}
+                      className="h-7 text-[10px]"
+                    >
+                      + Tambah Item
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {formData.bundleItems.map((item, idx) => (
+                      <div key={idx} className="flex gap-2 items-start">
+                        <div className="flex-1">
+                          <Select
+                            value={item.productId}
+                            onValueChange={(val) => updateBundleItem(idx, 'productId', val)}
+                          >
+                            <SelectTrigger className="h-9 text-xs">
+                              <SelectValue placeholder="Pilih produk..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableComponents.map((p) => (
+                                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="w-20">
+                          <Input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) => updateBundleItem(idx, 'quantity', parseInt(e.target.value) || 1)}
+                            className="h-9 text-xs"
+                            placeholder="Jml"
+                          />
+                        </div>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-9 w-9 text-destructive"
+                          onClick={() => removeBundleItem(idx)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    {formData.bundleItems.length === 0 && (
+                      <p className="text-[10px] text-center text-muted-foreground py-2 italic">Belum ada item ditambahkan</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label>Gambar Produk</Label>
+                <ImageUploader
+                  value={formData.imageUrl}
+                  onChange={(url) => setFormData({ ...formData, imageUrl: url })}
+                />
+              </div>
+            </div>
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
@@ -300,7 +436,7 @@ export default function ProductsPage() {
               </Button>
               <Button type="submit" disabled={isPending}>
                 {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {editingProduct ? 'Simpan' : 'Tambah'}
+                {editingProduct ? 'Simpan Perubahan' : 'Buat Produk'}
               </Button>
             </DialogFooter>
           </form>

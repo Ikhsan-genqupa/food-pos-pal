@@ -17,6 +17,7 @@ export function useStocks(outletId?: string) {
             price,
             image_url,
             is_active,
+            is_bundle,
             category_id,
             categories (
               id,
@@ -55,6 +56,7 @@ export function useStocks(outletId?: string) {
           } : undefined,
           createdAt: new Date(),
           isActive: s.products.is_active,
+          isBundle: s.products.is_bundle,
         } : undefined,
         outletId: s.outlet_id,
         outlet: s.outlets ? {

@@ -33,7 +33,10 @@ export interface Product {
   category?: ProductCategory;
   image: string;
   price: number;
+  isBundle?: boolean;
+  bundleItems?: { productId: string; quantity: number }[];
   createdAt: Date;
+  isActive: boolean;
 }
 
 export interface Stock {

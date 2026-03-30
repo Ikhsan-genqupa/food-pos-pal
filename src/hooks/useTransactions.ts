@@ -131,18 +131,47 @@ export function useCreateTransaction() {
       // Reduce stock
       for (const item of input.items) {
         if (item.productId) {
-          const { data: stock } = await supabase
-            .from('stocks')
-            .select('id, quantity')
-            .eq('product_id', item.productId)
-            .eq('outlet_id', input.outletId)
-            .maybeSingle();
+          // Check if product is a bundle
+          const { data: product } = await supabase
+            .from('products')
+            .select('is_bundle, bundle_items')
+            .eq('id', item.productId)
+            .single();
 
-          if (stock) {
-            await supabase
+          if (product?.is_bundle && Array.isArray(product.bundle_items)) {
+            // Reduce stock for each item in bundle
+            const bundleItems = product.bundle_items as { productId: string; quantity: number }[];
+            for (const bundleItem of bundleItems) {
+              const { data: stock } = await supabase
+                .from('stocks')
+                .select('id, quantity')
+                .eq('product_id', bundleItem.productId)
+                .eq('outlet_id', input.outletId)
+                .maybeSingle();
+
+              if (stock) {
+                const deduction = bundleItem.quantity * item.quantity;
+                await supabase
+                  .from('stocks')
+                  .update({ quantity: Math.max(0, stock.quantity - deduction) })
+                  .eq('id', stock.id);
+              }
+            }
+          } else {
+            // Normal product stock reduction
+            const { data: stock } = await supabase
               .from('stocks')
-              .update({ quantity: Math.max(0, stock.quantity - item.quantity) })
-              .eq('id', stock.id);
+              .select('id, quantity')
+              .eq('product_id', item.productId)
+              .eq('outlet_id', input.outletId)
+              .maybeSingle();
+
+            if (stock) {
+              await supabase
+                .from('stocks')
+                .update({ quantity: Math.max(0, stock.quantity - item.quantity) })
+                .eq('id', stock.id);
+            }
           }
         }
       }

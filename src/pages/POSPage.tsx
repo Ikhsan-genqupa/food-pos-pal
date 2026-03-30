@@ -35,6 +35,16 @@ export default function POSPage() {
   });
 
   const getStock = (productId: string) => {
+    const product = products.find((p) => p.id === productId);
+    
+    if (product?.isBundle && product.bundleItems && product.bundleItems.length > 0) {
+      const potentialStocks = product.bundleItems.map((item) => {
+        const componentStock = stocks.find((s) => s.productId === item.productId)?.quantity || 0;
+        return Math.floor(componentStock / item.quantity);
+      });
+      return Math.min(...potentialStocks);
+    }
+
     const stock = stocks.find((s) => s.productId === productId);
     return stock?.quantity || 0;
   };
