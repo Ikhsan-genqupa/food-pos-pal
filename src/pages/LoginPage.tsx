@@ -30,19 +30,32 @@ export default function LoginPage() {
     setError('');
     setIsLoading(true);
 
-    // Convert username to internal email format
-    const email = username.toLowerCase().replace(/[^a-z0-9]/g, '') + INTERNAL_DOMAIN;
+    // Try multiple domains for backward compatibility
+    const cleanUsername = username.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const domains = [INTERNAL_DOMAIN, '@genqupa.internal'];
+    
+    let lastResult: { success: boolean; error?: string } = { success: false, error: 'ID atau kata sandi salah' };
 
-    const result = await login(email, password);
+    for (const domain of domains) {
+      const email = cleanUsername + domain;
+      const result = await login(email, password);
+      
+      if (result.success) {
+        lastResult = result;
+        break;
+      } else {
+        lastResult = { success: false, error: result.error || 'ID atau kata sandi salah' };
+      }
+    }
 
-    if (result.success) {
+    if (lastResult.success) {
       toast({
         title: 'Selamat Datang!',
         description: 'Login berhasil',
       });
       navigate('/dashboard');
     } else {
-      setError(result.error || 'ID atau kata sandi salah');
+      setError(lastResult.error || 'ID atau kata sandi salah');
     }
 
     setIsLoading(false);
