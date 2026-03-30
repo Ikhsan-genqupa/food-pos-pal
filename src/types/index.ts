@@ -33,7 +33,10 @@ export interface Product {
   category?: ProductCategory;
   image: string;
   price: number;
+  isBundle?: boolean;
+  bundleItems?: { productId: string; quantity: number }[];
   createdAt: Date;
+  isActive: boolean;
 }
 
 export interface Stock {
@@ -51,16 +54,20 @@ export interface CartItem {
   quantity: number;
 }
 
+export type PaymentMethod = 'tunai' | 'qris' | 'ovo' | 'gopay' | 'dana' | 'debit' | 'kredit';
+
 export interface Transaction {
   id: string;
+  transactionNumber: string;
   outletId: string;
   outlet?: Outlet;
   items: TransactionItem[];
   subtotal: number;
   total: number;
-  paymentMethod: 'cash';
+  paymentMethod: PaymentMethod;
   cashReceived: number;
   change: number;
+  cashierName?: string;
   createdAt: Date;
 }
 
