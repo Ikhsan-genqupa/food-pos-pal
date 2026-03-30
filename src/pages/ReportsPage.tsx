@@ -127,6 +127,24 @@ export default function ReportsPage() {
   const totalTransactions = [...new Set(exportData.map(r => r['ID Transaksi']))].length;
   const avgTransaction = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
 
+  const outletSummaries = selectedOutlet === 'all' ? Array.from(
+    exportData.reduce((acc, row) => {
+      const key = row.Outlet;
+      if (!acc.has(key)) {
+        acc.set(key, { name: key, revenue: 0, transactions: new Set() });
+      }
+      const data = acc.get(key)!;
+      data.revenue += row.Total;
+      data.transactions.add(row['ID Transaksi']);
+      return acc;
+    }, new Map<string, { name: string; revenue: number; transactions: Set<string> }>())
+  ).map(([_, val]) => ({
+    name: val.name,
+    revenue: val.revenue,
+    transactions: val.transactions.size,
+    avg: val.transactions.size > 0 ? val.revenue / val.transactions.size : 0
+  })).sort((a, b) => b.revenue - a.revenue) : [];
+
   const handleExportExcel = () => {
     const headers = ['Tanggal', 'ID Transaksi', 'Outlet', 'Cabang', 'Produk', 'Metode', 'Jumlah', 'Harga', 'Total'];
     const csvContent = [
@@ -212,6 +230,8 @@ export default function ReportsPage() {
           .summary-item .value { font-size: 18px; font-weight: 700; color: #0d9488; margin-bottom: 2px; }
           .summary-item .label { font-size: 8px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
           
+          .section-title { font-size: 10px; font-weight: 800; text-transform: uppercase; margin: 25px 0 10px; color: #374151; border-bottom: 2px solid #0d9488; display: inline-block; padding-bottom: 2px; }
+          
           table { width: 100%; border-collapse: collapse; margin-top: 5px; border-radius: 8px; overflow: hidden; border-style: hidden; box-shadow: 0 0 0 1px #f3f4f6; table-layout: auto; }
           th { 
             background-color: #0d9488; 
@@ -281,6 +301,31 @@ export default function ReportsPage() {
           </div>
         </div>
 
+        ${selectedOutlet === 'all' ? `
+          <div class="section-title">Ringkasan Per Outlet</div>
+          <table style="margin-bottom: 25px;">
+            <thead>
+              <tr>
+                <th>Nama Outlet</th>
+                <th style="text-align: center;">Jml Transaksi</th>
+                <th style="text-align: right;">Total Omzet</th>
+                <th style="text-align: right;">Rata-rata</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${outletSummaries.map(o => `
+                <tr>
+                  <td style="font-weight: 700;">${o.name}</td>
+                  <td style="text-align: center;">${o.transactions}</td>
+                  <td style="text-align: right; color: #0d9488; font-weight: 600;">Rp${o.revenue.toLocaleString('id-ID')}</td>
+                  <td style="text-align: right; color: #6b7280;">Rp${Math.round(o.avg).toLocaleString('id-ID')}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        ` : ''}
+
+        <div class="section-title">Detail Transaksi</div>
         <table>
           <thead>
             <tr>
@@ -310,7 +355,7 @@ export default function ReportsPage() {
           </tbody>
           <tfoot style="background-color: #f9fafb;">
             <tr>
-              <td colspan="7" style="text-align: right; padding: 10px 8px; font-weight: 700; font-size: 8px; text-transform: uppercase;">Total Terhitung</td>
+              <td colspan="7" style="text-align: right; padding: 10px 8px; font-weight: 700; font-size: 8px; text-transform: uppercase;">Total Transaksi Terhitung</td>
               <td style="text-align: right; padding: 10px 8px; font-weight: 800; font-size: 9px; color: #0d9488; border-top: 2px solid #0d9488;">Rp${totalRevenue.toLocaleString('id-ID')}</td>
             </tr>
           </tfoot>
@@ -486,19 +531,43 @@ export default function ReportsPage() {
 
       {/* Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="stat-card text-center">
-          <p className="text-xs text-muted-foreground">Total Pendapatan</p>
-          <p className="text-xl font-bold text-primary">{formatCurrency(totalRevenue)}</p>
+        <div className="stat-card text-center border-t-4 border-teal-500">
+          <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1">Total Pendapatan</p>
+          <p className="text-2xl font-black text-teal-600">{formatCurrency(totalRevenue)}</p>
         </div>
         <div className="stat-card text-center">
-          <p className="text-xs text-muted-foreground">Total Transaksi</p>
-          <p className="text-xl font-bold text-foreground">{totalTransactions}</p>
+          <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1">Total Transaksi</p>
+          <p className="text-2xl font-black text-foreground">{totalTransactions}</p>
         </div>
         <div className="stat-card text-center">
-          <p className="text-xs text-muted-foreground">Rata-rata Transaksi</p>
-          <p className="text-xl font-bold text-foreground">{formatCurrency(avgTransaction)}</p>
+          <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1">Rata-rata Transaksi</p>
+          <p className="text-2xl font-black text-foreground">{formatCurrency(avgTransaction)}</p>
         </div>
       </div>
+
+      {/* Outlet Performance Summary (Visible for admin when all outlets selected) */}
+      {isAdmin && selectedOutlet === 'all' && (
+        <div className="stat-card bg-muted/20">
+          <div className="flex items-center gap-2 mb-4">
+            <Store className="h-4 w-4 text-teal-600" />
+            <h3 className="font-bold text-sm uppercase tracking-widest">Ringkasan Per Outlet</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {outletSummaries.map((o, idx) => (
+              <div key={idx} className="bg-background p-4 rounded-lg border border-border shadow-sm flex flex-col justify-between">
+                <div>
+                  <h4 className="font-bold text-base mb-1">{o.name}</h4>
+                  <p className="text-xs text-muted-foreground mb-3">{o.transactions} Transaksi</p>
+                </div>
+                <div className="flex items-end justify-between">
+                  <p className="text-xs text-muted-foreground">Omzet</p>
+                  <p className="text-lg font-black text-teal-600">{formatCurrency(o.revenue)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Report table */}
       <div className="stat-card overflow-hidden p-0">
