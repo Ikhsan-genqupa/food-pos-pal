@@ -21,8 +21,35 @@ export default function ReportsPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   const [selectedOutlet, setSelectedOutlet] = useState<string>(isAdmin ? 'all' : (user?.outletId || ''));
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const formatYMD = (date: Date) => {
+    const d = new Date(date);
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().split('T')[0];
+  };
+
+  const today = new Date();
+  const [startDate, setStartDate] = useState(formatYMD(today));
+  const [endDate, setEndDate] = useState(formatYMD(today));
+
+  const setToday = () => {
+    setStartDate(formatYMD(today));
+    setEndDate(formatYMD(today));
+  };
+
+  const setThisWeek = () => {
+    const start = new Date(today);
+    const day = start.getDay(); 
+    const diff = start.getDate() - day + (day === 0 ? -6 : 1); // Monday
+    start.setDate(diff);
+    setStartDate(formatYMD(start));
+    setEndDate(formatYMD(today));
+  };
+
+  const setThisMonth = () => {
+    const start = new Date(today.getFullYear(), today.getMonth(), 1);
+    setStartDate(formatYMD(start));
+    setEndDate(formatYMD(today));
+  };
 
   // Fetch real data
   const { data: transactions = [], isLoading } = useTransactions(selectedOutlet);
@@ -262,9 +289,16 @@ export default function ReportsPage() {
 
       {/* Filters */}
       <div className="stat-card">
-        <div className="flex items-center gap-2 mb-4">
-          <Filter className="h-4 w-4 text-primary" />
-          <h3 className="font-medium text-foreground">Filter</h3>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-primary" />
+            <h3 className="font-medium text-foreground">Filter Laporan</h3>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={setToday} className="text-xs h-8">Hari Ini</Button>
+            <Button variant="outline" size="sm" onClick={setThisWeek} className="text-xs h-8">Minggu Ini</Button>
+            <Button variant="outline" size="sm" onClick={setThisMonth} className="text-xs h-8">Bulan Ini</Button>
+          </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="space-y-2">
