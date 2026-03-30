@@ -30,10 +30,12 @@ export default function ReportsPage() {
   const today = new Date();
   const [startDate, setStartDate] = useState(formatYMD(today));
   const [endDate, setEndDate] = useState(formatYMD(today));
+  const [filterType, setFilterType] = useState< 'today' | 'week' | 'month' | 'custom'>('today');
 
   const setToday = () => {
     setStartDate(formatYMD(today));
     setEndDate(formatYMD(today));
+    setFilterType('today');
   };
 
   const setThisWeek = () => {
@@ -43,12 +45,20 @@ export default function ReportsPage() {
     start.setDate(diff);
     setStartDate(formatYMD(start));
     setEndDate(formatYMD(today));
+    setFilterType('week');
   };
 
   const setThisMonth = () => {
     const start = new Date(today.getFullYear(), today.getMonth(), 1);
     setStartDate(formatYMD(start));
     setEndDate(formatYMD(today));
+    setFilterType('month');
+  };
+
+  const onDateChange = (type: 'start' | 'end', value: string) => {
+    if (type === 'start') setStartDate(value);
+    else setEndDate(value);
+    setFilterType('custom');
   };
 
   // Fetch real data
@@ -130,6 +140,7 @@ export default function ReportsPage() {
           body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             padding: 40px; 
+            padding-bottom: 100px; /* Space for fixed footer */
             color: #1a1a1a;
             background-color: white;
             line-height: 1.5;
@@ -177,13 +188,17 @@ export default function ReportsPage() {
           tr:nth-child(even) { background-color: #fcfcfc; }
           
           .footer { 
+            position: fixed;
+            bottom: 40px;
+            left: 40px;
+            right: 40px;
             text-align: center; 
-            margin-top: 60px; 
             font-size: 10px; 
             color: #9ca3af; 
             border-top: 1px solid #f3f4f6;
-            padding-top: 25px;
+            padding-top: 20px;
             letter-spacing: 0.5px;
+            background: white;
           }
           .footer p { margin: 5px 0; }
           
@@ -295,9 +310,30 @@ export default function ReportsPage() {
             <h3 className="font-medium text-foreground">Filter Laporan</h3>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={setToday} className="text-xs h-8">Hari Ini</Button>
-            <Button variant="outline" size="sm" onClick={setThisWeek} className="text-xs h-8">Minggu Ini</Button>
-            <Button variant="outline" size="sm" onClick={setThisMonth} className="text-xs h-8">Bulan Ini</Button>
+            <Button 
+              variant={filterType === 'today' ? 'default' : 'outline'} 
+              size="sm" 
+              onClick={setToday} 
+              className="text-xs h-8"
+            >
+              Hari Ini
+            </Button>
+            <Button 
+              variant={filterType === 'week' ? 'default' : 'outline'} 
+              size="sm" 
+              onClick={setThisWeek} 
+              className="text-xs h-8"
+            >
+              Minggu Ini
+            </Button>
+            <Button 
+              variant={filterType === 'month' ? 'default' : 'outline'} 
+              size="sm" 
+              onClick={setThisMonth} 
+              className="text-xs h-8"
+            >
+              Bulan Ini
+            </Button>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -306,7 +342,7 @@ export default function ReportsPage() {
             <Input
               type="date"
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              onChange={(e) => onDateChange('start', e.target.value)}
             />
           </div>
           <div className="space-y-2">
@@ -314,7 +350,7 @@ export default function ReportsPage() {
             <Input
               type="date"
               value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
+              onChange={(e) => onDateChange('end', e.target.value)}
             />
           </div>
           {isAdmin && (
