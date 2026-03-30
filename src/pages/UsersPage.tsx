@@ -123,7 +123,7 @@ export default function UsersPage() {
     setIsDeleting(true);
     try {
       const { data, error } = await supabase.functions.invoke('delete-user', {
-        body: { user_id: deleteTarget.id },
+        body: { userId: deleteTarget.id },
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
       if (error) throw error;
