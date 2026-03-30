@@ -35,17 +35,27 @@ export default function POSPage() {
   });
 
   const getStock = (productId: string) => {
+    const product = products.find((p) => p.id === productId);
+
+    if (product?.isBundle && product.bundleItems && product.bundleItems.length > 0) {
+      const potentialStocks = product.bundleItems.map((item) => {
+        const componentStock = stocks.find((s) => s.productId === item.productId)?.quantity || 0;
+        return Math.floor(componentStock / item.quantity);
+      });
+      return Math.min(...potentialStocks);
+    }
+
     const stock = stocks.find((s) => s.productId === productId);
     return stock?.quantity || 0;
   };
 
   const handleCheckoutComplete = async (transaction: Transaction) => {
-    // Save transaction to database
     await createTransaction.mutateAsync({
       outletId: user?.outletId || '',
       items: transaction.items,
       subtotal: transaction.subtotal,
       total: transaction.total,
+      paymentMethod: transaction.paymentMethod,
       cashReceived: transaction.cashReceived,
       change: transaction.change,
       cashierName: user?.email,
@@ -73,10 +83,7 @@ export default function POSPage() {
             className="pl-10"
           />
         </div>
-        <Button
-          className="lg:hidden"
-          onClick={() => setShowCart(true)}
-        >
+        <Button className="lg:hidden" onClick={() => setShowCart(true)}>
           <ShoppingCart className="h-4 w-4 mr-2" />
           Keranjang ({itemCount})
         </Button>
@@ -136,10 +143,7 @@ export default function POSPage() {
       {/* Cart panel - mobile */}
       {showCart && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div
-            className="absolute inset-0 bg-foreground/20 backdrop-blur-sm"
-            onClick={() => setShowCart(false)}
-          />
+          <div className="absolute inset-0 bg-foreground/20 backdrop-blur-sm" onClick={() => setShowCart(false)} />
           <div className="absolute right-0 top-0 h-full w-full max-w-sm bg-card shadow-xl animate-slide-in">
             <div className="flex items-center justify-between p-4 border-b border-border">
               <h2 className="font-semibold">Keranjang</h2>
@@ -148,21 +152,14 @@ export default function POSPage() {
               </Button>
             </div>
             <div className="h-[calc(100%-65px)]">
-              <CartPanel onCheckout={() => {
-                setShowCart(false);
-                setCheckoutOpen(true);
-              }} />
+              <CartPanel onCheckout={() => { setShowCart(false); setCheckoutOpen(true); }} />
             </div>
           </div>
         </div>
       )}
 
       {/* Checkout dialog */}
-      <CheckoutDialog
-        open={checkoutOpen}
-        onOpenChange={setCheckoutOpen}
-        onComplete={handleCheckoutComplete}
-      />
+      <CheckoutDialog open={checkoutOpen} onOpenChange={setCheckoutOpen} onComplete={handleCheckoutComplete} />
     </div>
   );
 }

@@ -15,8 +15,21 @@ export function formatCurrency(amount: number): string {
 }
 
 export function formatDate(date: Date): string {
+  if (!(date instanceof Date)) date = new Date(date);
   return new Intl.DateTimeFormat('id-ID', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(date);
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date).replace(/\./g, ':');
+}
+
+export function formatDateShort(date: Date | string): string {
+  const d = date instanceof Date ? date : new Date(date);
+  return new Intl.DateTimeFormat('id-ID', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(d);
 }

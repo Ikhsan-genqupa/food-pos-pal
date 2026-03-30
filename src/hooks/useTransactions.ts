@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Transaction, TransactionItem } from '@/types';
+import { Transaction, TransactionItem, PaymentMethod } from '@/types';
 import { toast } from '@/hooks/use-toast';
 
 export interface CreateTransactionInput {
@@ -8,6 +8,7 @@ export interface CreateTransactionInput {
   items: TransactionItem[];
   subtotal: number;
   total: number;
+  paymentMethod: PaymentMethod;
   cashReceived: number;
   change: number;
   cashierName?: string;
@@ -75,7 +76,7 @@ export function useTransactions(outletId?: string) {
         })),
         subtotal: Number(t.subtotal),
         total: Number(t.total),
-        paymentMethod: t.payment_method as 'cash',
+        paymentMethod: t.payment_method as PaymentMethod,
         cashReceived: Number(t.cash_received),
         change: Number(t.change_amount),
         cashierName: t.cashier_name,
@@ -90,10 +91,8 @@ export function useCreateTransaction() {
 
   return useMutation({
     mutationFn: async (input: CreateTransactionInput) => {
-      // Generate transaction number
       const transactionNumber = `TRX${Date.now()}`;
 
-      // Create transaction
       const { data: transaction, error: txError } = await supabase
         .from('transactions')
         .insert({
@@ -101,7 +100,7 @@ export function useCreateTransaction() {
           outlet_id: input.outletId,
           subtotal: input.subtotal,
           total: input.total,
-          payment_method: 'cash',
+          payment_method: input.paymentMethod || 'tunai',
           cash_received: input.cashReceived,
           change_amount: input.change,
           cashier_name: input.cashierName,
@@ -111,7 +110,6 @@ export function useCreateTransaction() {
 
       if (txError) throw txError;
 
-      // Create transaction items
       const { error: itemsError } = await supabase
         .from('transaction_items')
         .insert(
@@ -130,18 +128,44 @@ export function useCreateTransaction() {
       // Reduce stock
       for (const item of input.items) {
         if (item.productId) {
-          const { data: stock } = await supabase
-            .from('stocks')
-            .select('id, quantity')
-            .eq('product_id', item.productId)
-            .eq('outlet_id', input.outletId)
-            .maybeSingle();
+          const { data: product } = await supabase
+            .from('products')
+            .select('is_bundle, bundle_items')
+            .eq('id', item.productId)
+            .single();
 
-          if (stock) {
-            await supabase
+          if (product?.is_bundle && Array.isArray(product.bundle_items)) {
+            const bundleItems = product.bundle_items as { productId: string; quantity: number }[];
+            for (const bundleItem of bundleItems) {
+              const { data: stock } = await supabase
+                .from('stocks')
+                .select('id, quantity')
+                .eq('product_id', bundleItem.productId)
+                .eq('outlet_id', input.outletId)
+                .maybeSingle();
+
+              if (stock) {
+                const deduction = bundleItem.quantity * item.quantity;
+                await supabase
+                  .from('stocks')
+                  .update({ quantity: Math.max(0, stock.quantity - deduction) })
+                  .eq('id', stock.id);
+              }
+            }
+          } else {
+            const { data: stock } = await supabase
               .from('stocks')
-              .update({ quantity: Math.max(0, stock.quantity - item.quantity) })
-              .eq('id', stock.id);
+              .select('id, quantity')
+              .eq('product_id', item.productId)
+              .eq('outlet_id', input.outletId)
+              .maybeSingle();
+
+            if (stock) {
+              await supabase
+                .from('stocks')
+                .update({ quantity: Math.max(0, stock.quantity - item.quantity) })
+                .eq('id', stock.id);
+            }
           }
         }
       }

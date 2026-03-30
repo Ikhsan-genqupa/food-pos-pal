@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { Transaction, TransactionItem } from '@/types';
+import { Transaction, TransactionItem, PaymentMethod } from '@/types';
 import logo from '@/assets/logo.png';
 import {
   Dialog,
@@ -13,7 +13,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Printer, Check } from 'lucide-react';
+import { Printer, Check, Banknote, QrCode, Wallet, CreditCard } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface CheckoutDialogProps {
   open: boolean;
@@ -28,13 +29,14 @@ export default function CheckoutDialog({
 }: CheckoutDialogProps) {
   const { items, total, clearCart } = useCart();
   const { user } = useAuth();
-  const [cashReceived, setCashReceived] = useState<string>('');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('tunai');
+  const [cashReceived, setCashReceived] = useState('');
   const [showReceipt, setShowReceipt] = useState(false);
   const [transaction, setTransaction] = useState<Transaction | null>(null);
 
-  const cashAmount = parseFloat(cashReceived) || 0;
-  const change = cashAmount - total;
-  const canComplete = cashAmount >= total;
+  const cashAmount = paymentMethod === 'tunai' ? (parseFloat(cashReceived) || 0) : total;
+  const change = paymentMethod === 'tunai' ? (cashAmount - total) : 0;
+  const canComplete = paymentMethod === 'tunai' ? (cashAmount >= total) : true;
 
   const handleComplete = () => {
     const transactionItems: TransactionItem[] = items.map((item) => ({
@@ -47,11 +49,12 @@ export default function CheckoutDialog({
 
     const newTransaction: Transaction = {
       id: `TRX${Date.now()}`,
+      transactionNumber: `TRX${Date.now()}`,
       outletId: user?.outletId || '',
       items: transactionItems,
       subtotal: total,
       total: total,
-      paymentMethod: 'cash',
+      paymentMethod: paymentMethod,
       cashReceived: cashAmount,
       change: change,
       createdAt: new Date(),
@@ -65,6 +68,7 @@ export default function CheckoutDialog({
   const handleClose = () => {
     clearCart();
     setCashReceived('');
+    setPaymentMethod('tunai');
     setShowReceipt(false);
     setTransaction(null);
     onOpenChange(false);
@@ -74,7 +78,30 @@ export default function CheckoutDialog({
     window.print();
   };
 
-  const quickAmounts = [50000, 100000, 150000, 200000];
+  const quickAmounts = [10000, 20000, 50000, 100000];
+
+  const formatInputNumber = (val: string) => {
+    if (!val) return '';
+    const num = val.replace(/\D/g, '');
+    return num.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  };
+
+  const parseInputNumber = (val: string) => {
+    return val.replace(/\D/g, '');
+  };
+
+  const getPaymentLabel = (method: string) => {
+    switch (method) {
+      case 'tunai': return 'Tunai';
+      case 'qris': return 'QRIS';
+      case 'ovo': return 'OVO';
+      case 'gopay': return 'GoPay';
+      case 'dana': return 'Dana';
+      case 'debit': return 'Debit';
+      case 'kredit': return 'Kredit';
+      default: return method;
+    }
+  };
 
   if (showReceipt && transaction) {
     return (
@@ -99,7 +126,7 @@ export default function CheckoutDialog({
                 {formatDate(transaction.createdAt)}
               </p>
               <p className="text-[10px] text-muted-foreground">
-                #{transaction.id}
+                #{transaction.transactionNumber}
               </p>
             </div>
 
@@ -109,7 +136,7 @@ export default function CheckoutDialog({
                   <div>
                     <span>{item.productName}</span>
                     <span className="text-muted-foreground ml-1">
-                      x{item.quantity}
+                      {item.quantity} x {formatCurrency(item.price)}
                     </span>
                   </div>
                   <span>{formatCurrency(item.total)}</span>
@@ -127,18 +154,26 @@ export default function CheckoutDialog({
                 <span>{formatCurrency(transaction.total)}</span>
               </div>
               <div className="flex justify-between text-[11px]">
-                <span>Tunai</span>
-                <span>{formatCurrency(transaction.cashReceived)}</span>
+                <span>Metode</span>
+                <span>{getPaymentLabel(transaction.paymentMethod)}</span>
               </div>
-              <div className="flex justify-between text-[11px]">
-                <span>Kembalian</span>
-                <span>{formatCurrency(transaction.change)}</span>
-              </div>
+              {transaction.paymentMethod === 'tunai' && (
+                <>
+                  <div className="flex justify-between text-[11px]">
+                    <span>Diterima</span>
+                    <span>{formatCurrency(transaction.cashReceived)}</span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span>Kembalian</span>
+                    <span>{formatCurrency(transaction.change)}</span>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="text-center mt-4 text-[10px] text-muted-foreground">
               <p>Terima kasih atas pembelian Anda!</p>
-              <p>Silakan datang kembali</p>
+              <p>GenQuPa POS • Solusi Bisnis Anda</p>
             </div>
           </div>
 
@@ -160,79 +195,120 @@ export default function CheckoutDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Pembayaran</DialogTitle>
+          <DialogTitle>Finalisasi Pembayaran</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Total */}
+          {/* Total Display */}
           <div className="bg-primary/5 rounded-xl p-4 text-center">
-            <p className="text-sm text-muted-foreground">Total Bayar</p>
+            <p className="text-sm text-muted-foreground">Total Tagihan</p>
             <p className="text-3xl font-bold text-primary">{formatCurrency(total)}</p>
           </div>
 
-          {/* Quick amounts */}
-          <div className="grid grid-cols-4 gap-2">
-            {quickAmounts.map((amount) => (
-              <Button
-                key={amount}
-                variant="outline"
-                size="sm"
-                onClick={() => setCashReceived(amount.toString())}
-                className="text-xs"
-              >
-                {(amount / 1000)}K
-              </Button>
-            ))}
-          </div>
-
-          {/* Cash input */}
+          {/* Payment Method Selector */}
           <div className="space-y-2">
-            <Label>Uang Diterima</Label>
-            <Input
-              type="number"
-              placeholder="Masukkan jumlah..."
-              value={cashReceived}
-              onChange={(e) => setCashReceived(e.target.value)}
-              className="text-lg font-medium"
-            />
+            <Label>Metode Pembayaran</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant={paymentMethod === 'tunai' ? 'default' : 'outline'}
+                onClick={() => setPaymentMethod('tunai')}
+              >
+                <Banknote className="h-4 w-4 mr-2" />
+                Tunai
+              </Button>
+              <Button
+                variant={paymentMethod !== 'tunai' ? 'default' : 'outline'}
+                onClick={() => setPaymentMethod('qris')}
+              >
+                <QrCode className="h-4 w-4 mr-2" />
+                Non-Tunai
+              </Button>
+            </div>
+
+            {/* Cashless Sub-methods */}
+            {paymentMethod !== 'tunai' && (
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Pilih Tipe Non-Tunai</Label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {(['qris', 'ovo', 'gopay', 'dana', 'debit', 'kredit'] as PaymentMethod[]).map((method) => (
+                    <Button
+                      key={method}
+                      size="sm"
+                      variant={paymentMethod === method ? 'default' : 'outline'}
+                      onClick={() => setPaymentMethod(method)}
+                      className="text-xs"
+                    >
+                      {getPaymentLabel(method)}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Change */}
-          {cashAmount > 0 && (
-            <div className="bg-muted rounded-xl p-4">
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Kembalian</span>
-                <span
-                  className={`text-2xl font-bold ${
-                    canComplete ? 'text-success' : 'text-destructive'
-                  }`}
-                >
-                  {formatCurrency(Math.max(0, change))}
-                </span>
+          {/* Tunai Specific UI */}
+          {paymentMethod === 'tunai' && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-4 gap-2">
+                {quickAmounts.map((amount) => (
+                  <Button
+                    key={amount}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCashReceived(amount.toString())}
+                    className="text-[11px] bg-muted/50 hover:bg-primary/10 transition-colors h-9"
+                  >
+                    {(amount / 1000)}K
+                  </Button>
+                ))}
               </div>
-              {!canComplete && (
-                <p className="text-xs text-destructive mt-1">
-                  Uang tidak cukup
-                </p>
+
+              <div className="space-y-1">
+                <Label>Uang Diterima</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">Rp</span>
+                  <Input
+                    type="text"
+                    value={formatInputNumber(cashReceived)}
+                    onChange={(e) => setCashReceived(parseInputNumber(e.target.value))}
+                    className="pl-12 h-14 text-2xl font-black rounded-xl border-2 focus-visible:ring-primary/20"
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              {cashAmount > 0 && (
+                <div className="bg-muted rounded-xl p-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Kembalian</span>
+                    <span className={cn('text-2xl font-bold', canComplete ? 'text-success' : 'text-destructive')}>
+                      {formatCurrency(Math.max(0, change))}
+                    </span>
+                  </div>
+                  {!canComplete && (
+                    <p className="text-xs text-destructive mt-1 font-medium">KURANG</p>
+                  )}
+                </div>
               )}
+            </div>
+          )}
+
+          {/* Checkout Info */}
+          {paymentMethod !== 'tunai' && (
+            <div className="bg-muted rounded-xl p-4 text-center">
+              <p className="text-sm text-muted-foreground">
+                Konfirmasi pembayaran {getPaymentLabel(paymentMethod)} selesai
+              </p>
             </div>
           )}
 
           {/* Actions */}
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
               Batal
             </Button>
-            <Button
-              className="flex-1"
-              disabled={!canComplete}
-              onClick={handleComplete}
-            >
-              Proses Pembayaran
+            <Button className="flex-1" disabled={!canComplete} onClick={handleComplete}>
+              LANJUTKAN
             </Button>
           </div>
         </div>

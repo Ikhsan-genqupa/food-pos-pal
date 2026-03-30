@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCart } from '@/contexts/CartContext';
-import { formatCurrency } from '@/data/mockData';
+import { formatCurrency } from '@/lib/utils';
 import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 

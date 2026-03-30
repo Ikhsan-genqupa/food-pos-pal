@@ -1,7 +1,7 @@
 import React from 'react';
 import { Product } from '@/types';
-import { formatCurrency } from '@/data/mockData';
-import { Plus } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
+import { Plus, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ProductCardProps {
@@ -27,11 +27,21 @@ export default function ProductCard({ product, stock = 0, onAdd }: ProductCardPr
           src={product.image}
           alt={product.name}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          onError={(e) => {
+            e.currentTarget.src = '/placeholder.svg';
+          }}
         />
+        {product.isBundle && (
+          <div className="absolute top-2 left-2">
+            <span className="bg-accent text-accent-foreground px-2 py-0.5 rounded-full text-[10px] font-medium">
+              Paket
+            </span>
+          </div>
+        )}
         {isOutOfStock && (
           <div className="absolute inset-0 bg-foreground/50 flex items-center justify-center">
             <span className="bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-xs font-medium">
-              Out of Stock
+              Stok Habis
             </span>
           </div>
         )}
@@ -49,7 +59,7 @@ export default function ProductCard({ product, stock = 0, onAdd }: ProductCardPr
         <h3 className="font-medium text-foreground line-clamp-1">{product.name}</h3>
         <div className="flex items-center justify-between mt-1">
           <p className="text-primary font-semibold">{formatCurrency(product.price)}</p>
-          <span className="text-xs text-muted-foreground">Stock: {stock}</span>
+          <span className="text-xs text-muted-foreground">Stok: {stock}</span>
         </div>
       </div>
     </div>
