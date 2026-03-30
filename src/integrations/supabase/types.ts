@@ -10,25 +10,25 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.4"
   }
   public: {
     Tables: {
       categories: {
         Row: {
-          created_at: string | null
+          created_at: string
           icon: string | null
           id: string
           name: string
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           icon?: string | null
           id?: string
           name: string
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           icon?: string | null
           id?: string
           name?: string
@@ -39,29 +39,29 @@ export type Database = {
         Row: {
           address: string
           branch_number: string
-          created_at: string | null
+          created_at: string
           id: string
-          is_active: boolean | null
+          is_active: boolean
           name: string
           person_in_charge: string
           username: string
         }
         Insert: {
-          address: string
+          address?: string
           branch_number: string
-          created_at?: string | null
+          created_at?: string
           id?: string
-          is_active?: boolean | null
+          is_active?: boolean
           name: string
-          person_in_charge: string
-          username: string
+          person_in_charge?: string
+          username?: string
         }
         Update: {
           address?: string
           branch_number?: string
-          created_at?: string | null
+          created_at?: string
           id?: string
-          is_active?: boolean | null
+          is_active?: boolean
           name?: string
           person_in_charge?: string
           username?: string
@@ -71,28 +71,28 @@ export type Database = {
       products: {
         Row: {
           category_id: string | null
-          created_at: string | null
+          created_at: string
           id: string
           image_url: string | null
-          is_active: boolean | null
+          is_active: boolean
           name: string
           price: number
         }
         Insert: {
           category_id?: string | null
-          created_at?: string | null
+          created_at?: string
           id?: string
           image_url?: string | null
-          is_active?: boolean | null
+          is_active?: boolean
           name: string
-          price: number
+          price?: number
         }
         Update: {
           category_id?: string | null
-          created_at?: string | null
+          created_at?: string
           id?: string
           image_url?: string | null
-          is_active?: boolean | null
+          is_active?: boolean
           name?: string
           price?: number
         }
@@ -108,17 +108,17 @@ export type Database = {
       }
       profiles: {
         Row: {
-          created_at: string | null
+          created_at: string
           id: string
           outlet_id: string | null
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           id: string
           outlet_id?: string | null
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           id?: string
           outlet_id?: string | null
         }
@@ -135,24 +135,24 @@ export type Database = {
       stocks: {
         Row: {
           id: string
-          outlet_id: string | null
-          product_id: string | null
-          quantity: number | null
-          updated_at: string | null
+          outlet_id: string
+          product_id: string
+          quantity: number
+          updated_at: string
         }
         Insert: {
           id?: string
-          outlet_id?: string | null
-          product_id?: string | null
-          quantity?: number | null
-          updated_at?: string | null
+          outlet_id: string
+          product_id: string
+          quantity?: number
+          updated_at?: string
         }
         Update: {
           id?: string
-          outlet_id?: string | null
-          product_id?: string | null
-          quantity?: number | null
-          updated_at?: string | null
+          outlet_id?: string
+          product_id?: string
+          quantity?: number
+          updated_at?: string
         }
         Relationships: [
           {
@@ -179,16 +179,16 @@ export type Database = {
           product_name: string
           quantity: number
           total: number
-          transaction_id: string | null
+          transaction_id: string
         }
         Insert: {
           id?: string
-          price: number
+          price?: number
           product_id?: string | null
           product_name: string
-          quantity: number
-          total: number
-          transaction_id?: string | null
+          quantity?: number
+          total?: number
+          transaction_id: string
         }
         Update: {
           id?: string
@@ -197,9 +197,16 @@ export type Database = {
           product_name?: string
           quantity?: number
           total?: number
-          transaction_id?: string | null
+          transaction_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "transaction_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "transaction_items_transaction_id_fkey"
             columns: ["transaction_id"]
@@ -214,34 +221,34 @@ export type Database = {
           cash_received: number
           cashier_name: string | null
           change_amount: number
-          created_at: string | null
+          created_at: string
           id: string
           outlet_id: string | null
-          payment_method: string | null
+          payment_method: string
           subtotal: number
           total: number
           transaction_number: string
         }
         Insert: {
-          cash_received: number
+          cash_received?: number
           cashier_name?: string | null
-          change_amount: number
-          created_at?: string | null
+          change_amount?: number
+          created_at?: string
           id?: string
           outlet_id?: string | null
-          payment_method?: string | null
-          subtotal: number
-          total: number
+          payment_method?: string
+          subtotal?: number
+          total?: number
           transaction_number: string
         }
         Update: {
           cash_received?: number
           cashier_name?: string | null
           change_amount?: number
-          created_at?: string | null
+          created_at?: string
           id?: string
           outlet_id?: string | null
-          payment_method?: string | null
+          payment_method?: string
           subtotal?: number
           total?: number
           transaction_number?: string
@@ -258,19 +265,16 @@ export type Database = {
       }
       user_roles: {
         Row: {
-          created_at: string | null
           id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
-          created_at?: string | null
           id?: string
-          role?: Database["public"]["Enums"]["app_role"]
+          role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
-          created_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
@@ -283,10 +287,6 @@ export type Database = {
     }
     Functions: {
       clean_invalid_stocks: { Args: never; Returns: Json }
-      get_user_role: {
-        Args: { _user_id: string }
-        Returns: Database["public"]["Enums"]["app_role"]
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
