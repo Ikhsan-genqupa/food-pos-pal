@@ -70,29 +70,35 @@ export type Database = {
       }
       products: {
         Row: {
+          bundle_items: Json | null
           category_id: string | null
           created_at: string
           id: string
           image_url: string | null
           is_active: boolean
+          is_bundle: boolean | null
           name: string
           price: number
         }
         Insert: {
+          bundle_items?: Json | null
           category_id?: string | null
           created_at?: string
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_bundle?: boolean | null
           name: string
           price?: number
         }
         Update: {
+          bundle_items?: Json | null
           category_id?: string | null
           created_at?: string
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_bundle?: boolean | null
           name?: string
           price?: number
         }
