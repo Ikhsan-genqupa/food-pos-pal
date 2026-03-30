@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useOutlets } from '@/hooks/useOutlets';
 import { useCategories } from '@/hooks/useCategories';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, formatDateShort } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -462,6 +462,9 @@ export default function ReportsPage() {
               value={startDate}
               onChange={(e) => onDateChange('start', e.target.value)}
             />
+            <p className="text-[10px] text-muted-foreground italic px-1">
+              Dipilih: {formatDateShort(startDate)}
+            </p>
           </div>
           <div className="space-y-2">
             <Label>Tanggal Akhir</Label>
@@ -470,6 +473,9 @@ export default function ReportsPage() {
               value={endDate}
               onChange={(e) => onDateChange('end', e.target.value)}
             />
+            <p className="text-[10px] text-muted-foreground italic px-1">
+              Dipilih: {formatDateShort(endDate)}
+            </p>
           </div>
           {isAdmin ? (
             <div className="space-y-2">
