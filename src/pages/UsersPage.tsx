@@ -89,6 +89,7 @@ export default function UsersPage() {
     try {
       const response = await supabase.functions.invoke('create-user', {
         body: { username, password, role, outlet_id: outletId === 'none' ? null : outletId },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
       });
 
       if (response.error) throw new Error(response.error.message || 'Gagal membuat user');
