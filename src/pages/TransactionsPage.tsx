@@ -59,14 +59,16 @@ export default function TransactionsPage() {
             size: 58mm auto; 
             margin: 0; 
           }
+          * { box-sizing: border-box; }
           body { 
             width: 58mm; 
-            margin: 0 auto; 
-            padding: 5mm; 
+            margin: 0; 
+            padding: 4mm; 
             font-family: 'Courier New', Courier, monospace; 
-            font-size: 12px; 
+            font-size: 11px; 
             color: #000;
-            line-height: 1.2;
+            line-height: 1.3;
+            background-color: white;
           }
           .text-center { text-align: center; }
           .text-right { text-align: right; }
@@ -74,29 +76,30 @@ export default function TransactionsPage() {
           .mb-1 { margin-bottom: 2px; }
           .mb-2 { margin-bottom: 5px; }
           .mb-4 { margin-bottom: 10px; }
-          .border-t { border-top: 1px dashed #000; padding-top: 5px; margin-top: 5px; }
-          .flex { display: flex; justify-content: space-between; }
-          .logo { height: 35px; width: auto; display: block; margin: 0 auto 5px; }
-          .item-row { margin-bottom: 2px; }
+          .border-t { border-top: 1px dashed #000; padding-top: 5px; margin-top: 5px; width: 100%; }
+          .flex { display: flex; justify-content: space-between; gap: 4px; }
+          .logo { height: 30px; width: auto; display: block; margin: 0 auto 5px; filter: grayscale(1); }
+          .item-row { margin-bottom: 3px; word-break: break-word; }
+          .price-info { font-size: 10px; color: #333; }
         </style>
       </head>
       <body>
         <div class="text-center mb-4">
           <img src="${logo}" class="logo" />
-          <div class="font-bold">GenQuPa POS</div>
-          <div>${outlet?.name || ''}</div>
-          <div>${outlet?.address || ''}</div>
-          <div style="font-size: 10px; margin-top: 2px;">
+          <div class="font-bold" style="font-size: 13px;">GenQuPa POS</div>
+          <div style="font-size: 10px;">${outlet?.name || ''}</div>
+          <div style="font-size: 9px; line-height: 1.1;">${outlet?.address || ''}</div>
+          <div style="font-size: 9px; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px;">
             ${formatDate(selectedTransaction.createdAt)}<br>
-            #${selectedTransaction.transactionNumber}
+            ID: #${selectedTransaction.transactionNumber}
           </div>
         </div>
 
         <div class="border-t">
           ${selectedTransaction.items.map(item => `
             <div class="item-row">
-              <div>${item.productName}</div>
-              <div class="flex">
+              <div class="font-bold">${item.productName}</div>
+              <div class="flex price-info">
                 <span>${item.quantity} x ${formatCurrency(item.price)}</span>
                 <span>${formatCurrency(item.total)}</span>
               </div>
@@ -104,28 +107,28 @@ export default function TransactionsPage() {
           `).join('')}
         </div>
 
-        <div class="border-t">
+        <div class="border-t" style="margin-top: 8px;">
           <div class="flex">
             <span>SUBTOTAL</span>
             <span>${formatCurrency(selectedTransaction.subtotal)}</span>
           </div>
-          <div class="flex font-bold" style="font-size: 14px; margin-top: 5px;">
+          <div class="flex font-bold" style="font-size: 13px; margin-top: 4px; border-top: 1px double #000; padding-top: 4px;">
             <span>TOTAL</span>
             <span>${formatCurrency(selectedTransaction.total)}</span>
           </div>
         </div>
 
-        <div class="border-t">
-          <div class="flex">
-            <span>METODE:</span>
+        <div class="border-t" style="margin-top: 8px;">
+          <div class="flex" style="font-size: 10px;">
+            <span class="font-bold">METODE:</span>
             <span>${paymentLabel}</span>
           </div>
           ${selectedTransaction.paymentMethod === 'tunai' ? `
-            <div class="flex">
-              <span>TUNAI:</span>
+            <div class="flex" style="font-size: 10px;">
+              <span>BAYAR:</span>
               <span>${formatCurrency(selectedTransaction.cashReceived || 0)}</span>
             </div>
-            <div class="flex font-bold">
+            <div class="flex font-bold" style="font-size: 11px;">
               <span>KEMBALI:</span>
               <span>${formatCurrency(selectedTransaction.change || 0)}</span>
             </div>
