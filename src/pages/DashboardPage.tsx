@@ -346,42 +346,44 @@ export default function DashboardPage() {
         {/* Product chart */}
         <div className="stat-card">
           <h3 className="font-medium text-foreground mb-4">Penjualan per Produk</h3>
-          <div className="h-56 flex items-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={productData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={70}
-                  paddingAngle={2}
-                  dataKey="value"
-                >
-                  {productData.map((entry, index) => (
-                    <Cell key={index} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                  }}
-                  formatter={(value: number) => [formatCurrency(value), 'Omzet']}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="space-y-1.5 pr-4 max-h-56 overflow-y-auto w-48">
+          <div className="flex flex-col sm:flex-row items-center gap-6 min-h-[224px]">
+            <div className="w-full sm:w-1/2 h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={productData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={2}
+                    dataKey="value"
+                  >
+                    {productData.map((entry, index) => (
+                      <Cell key={index} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                    }}
+                    formatter={(value: number) => [formatCurrency(value), 'Omzet']}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="w-full sm:w-1/2 space-y-2 max-h-56 overflow-y-auto pr-2 custom-scrollbar">
               {productData.map((item) => (
-                <div key={item.name} className="flex items-center gap-2 text-[10px]">
+                <div key={item.name} className="flex items-center gap-3 text-xs py-1 border-b border-border/30 last:border-0">
                   <div
-                    className="h-2 w-2 rounded-full flex-shrink-0"
+                    className="h-3 w-3 rounded-full flex-shrink-0"
                     style={{ backgroundColor: item.color }}
                   />
-                  <span className="text-muted-foreground truncate flex-1">{item.name}</span>
-                  <span className="font-bold">
+                  <span className="text-muted-foreground font-medium flex-1 leading-tight">{item.name}</span>
+                  <span className="font-bold text-foreground tabular-nums">
                     {totalProductSales > 0 ? Math.round((item.value / totalProductSales) * 100) : 0}%
                   </span>
                 </div>
