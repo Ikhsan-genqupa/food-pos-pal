@@ -55,22 +55,35 @@ export default function ReportsPage() {
     setFilterType('month');
   };
 
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('all');
+
+  const getPaymentLabel = (method: string) => {
+    switch (method.toLowerCase()) {
+      case 'tunai': return 'Tunai';
+      case 'qris': return 'QRIS';
+      case 'ovo': return 'OVO';
+      case 'gopay': return 'GoPay';
+      case 'dana': return 'Dana';
+      case 'debit': return 'Debit';
+      case 'kredit': return 'Kredit';
+      default: return method.toUpperCase();
+    }
+  };
+
   const onDateChange = (type: 'start' | 'end', value: string) => {
     if (type === 'start') setStartDate(value);
     else setEndDate(value);
     setFilterType('custom');
   };
 
-  // Fetch real data
   const { data: transactions = [], isLoading } = useTransactions(selectedOutlet);
   const { data: outlets = [] } = useOutlets();
   const { data: categories = [] } = useCategories();
 
-  // Get transactions based on filters
   const getFilteredTransactions = () => {
     let txList = [...transactions];
     
-    // Apply date filters
     if (startDate) {
       const start = new Date(startDate);
       txList = txList.filter(tx => new Date(tx.createdAt) >= start);
@@ -80,33 +93,39 @@ export default function ReportsPage() {
       end.setHours(23, 59, 59, 999);
       txList = txList.filter(tx => new Date(tx.createdAt) <= end);
     }
+
+    if (selectedPaymentMethod !== 'all') {
+      txList = txList.filter(tx => tx.paymentMethod.toLowerCase() === selectedPaymentMethod.toLowerCase());
+    }
     
     return txList;
   };
   
   const filteredTransactions = getFilteredTransactions();
 
-  const totalRevenue = filteredTransactions.reduce((sum, tx) => sum + tx.total, 0);
-  const totalTransactions = filteredTransactions.length;
-  const avgTransaction = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
-
-  // Build export data
   const exportData = filteredTransactions.flatMap((tx) => {
     const outlet = tx.outlet;
-    return tx.items.map((item) => ({
-      Tanggal: formatDate(tx.createdAt),
-      'ID Transaksi': tx.transactionNumber,
-      Outlet: outlet?.name || '',
-      Cabang: outlet?.branchNumber || '',
-      Produk: item.productName,
-      Jumlah: item.quantity,
-      Harga: item.price,
-      Total: item.total,
-    }));
+    return tx.items
+      .filter(item => selectedCategory === 'all' || item.productId === selectedCategory) // Simplified category filter
+      .map((item) => ({
+        Tanggal: formatDate(tx.createdAt),
+        'ID Transaksi': tx.transactionNumber,
+        Outlet: outlet?.name || '',
+        Cabang: outlet?.branchNumber || '',
+        Produk: item.productName,
+        Metode: getPaymentLabel(tx.paymentMethod),
+        Jumlah: item.quantity,
+        Harga: item.price,
+        Total: item.total,
+      }));
   });
 
+  const totalRevenue = exportData.reduce((sum, row) => sum + row.Total, 0);
+  const totalTransactions = [...new Set(exportData.map(r => r['ID Transaksi']))].length;
+  const avgTransaction = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
+
   const handleExportExcel = () => {
-    const headers = ['Tanggal', 'ID Transaksi', 'Outlet', 'Cabang', 'Produk', 'Jumlah', 'Harga', 'Total'];
+    const headers = ['Tanggal', 'ID Transaksi', 'Outlet', 'Cabang', 'Produk', 'Metode', 'Jumlah', 'Harga', 'Total'];
     const csvContent = [
       headers.join(','),
       ...exportData.map((row) => headers.map((h) => row[h as keyof typeof row]).join(',')),
@@ -146,7 +165,7 @@ export default function ReportsPage() {
           body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             padding: 20px 40px; 
-            padding-bottom: 80px; /* Space for fixed footer */
+            padding-bottom: 80px; 
             color: #1a1a1a;
             background-color: white;
             line-height: 1.5;
@@ -242,8 +261,7 @@ export default function ReportsPage() {
           <thead>
             <tr>
               <th>Tanggal</th>
-              <th>ID Transaksi</th>
-              <th>Outlet</th>
+              <th>Metode</th>
               <th>Produk</th>
               <th style="text-align: center;">Jml</th>
               <th style="text-align: right;">Harga</th>
@@ -254,10 +272,9 @@ export default function ReportsPage() {
             ${exportData.map(row => `
               <tr>
                 <td>${row.Tanggal}</td>
-                <td style="font-family: monospace; color: #6b7280;">${row['ID Transaksi']}</td>
-                <td>${row.Outlet}</td>
-                <td style="font-weight: 600; color: #111827;">${row.Produk}</td>
-                <td style="text-align: center; font-weight: 500;">${row.Jumlah}</td>
+                <td style="font-weight: 600;">${row.Metode}</td>
+                <td style="color: #4b5563;">${row.Produk}</td>
+                <td style="text-align: center;">${row.Jumlah}</td>
                 <td style="text-align: right;">Rp ${row.Harga.toLocaleString('id-ID')}</td>
                 <td style="text-align: right; font-weight: 700; color: #0d9488;">Rp ${row.Total.toLocaleString('id-ID')}</td>
               </tr>
@@ -342,7 +359,7 @@ export default function ReportsPage() {
             </Button>
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="space-y-2">
             <Label>Tanggal Mulai</Label>
             <Input
@@ -359,7 +376,7 @@ export default function ReportsPage() {
               onChange={(e) => onDateChange('end', e.target.value)}
             />
           </div>
-          {isAdmin && (
+          {isAdmin ? (
             <div className="space-y-2">
               <Label>Outlet</Label>
               <Select value={selectedOutlet} onValueChange={setSelectedOutlet}>
@@ -376,33 +393,62 @@ export default function ReportsPage() {
                 </SelectContent>
               </Select>
             </div>
+          ) : (
+            <div className="space-y-2">
+              <Label>Kategori</Label>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Semua Kategori" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Kategori</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.icon} {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           )}
           <div className="space-y-2">
-            <Label>Kategori</Label>
-            <Select>
+            <Label>Metode</Label>
+            <Select value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
               <SelectTrigger>
-                <SelectValue placeholder="Semua Kategori" />
+                <SelectValue placeholder="Semua Metode" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua Kategori</SelectItem>
-                {categories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id}>
-                    {cat.icon} {cat.name}
-                  </SelectItem>
-                ))}
+                <SelectItem value="all">Semua Metode</SelectItem>
+                <SelectItem value="tunai">Tunai</SelectItem>
+                <SelectItem value="qris">QRIS</SelectItem>
+                <SelectItem value="ovo">OVO</SelectItem>
+                <SelectItem value="gopay">GoPay</SelectItem>
+                <SelectItem value="dana">Dana</SelectItem>
+                <SelectItem value="debit">Debit</SelectItem>
+                <SelectItem value="kredit">Kredit</SelectItem>
               </SelectContent>
             </Select>
           </div>
+          {isAdmin && (
+            <div className="space-y-2">
+              <Label>Kategori</Label>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Semua Kategori" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Kategori</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.icon} {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Current view indicator */}
-      {!isAdmin && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Store className="h-4 w-4" />
-          <span>Menampilkan laporan: <span className="font-medium text-foreground">{user?.outletName}</span></span>
-        </div>
-      )}
 
       {/* Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -430,7 +476,7 @@ export default function ReportsPage() {
             <thead>
               <tr className="border-b border-border bg-muted/50">
                 <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground">Tanggal</th>
-                <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground">Transaksi</th>
+                <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground">Metode</th>
                 <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground">Outlet</th>
                 <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground">Produk</th>
                 <th className="text-center py-2.5 px-4 text-xs font-medium text-muted-foreground">Jml</th>
@@ -439,11 +485,11 @@ export default function ReportsPage() {
               </tr>
             </thead>
             <tbody>
-              {exportData.slice(0, 20).map((row, idx) => (
+              {exportData.slice(0, 50).map((row, idx) => (
                 <tr key={idx} className="border-b border-border/50 hover:bg-muted/30">
                   <td className="py-2.5 px-4 text-xs">{row.Tanggal}</td>
-                  <td className="py-2.5 px-4 text-xs font-mono">{row['ID Transaksi']}</td>
-                  <td className="py-2.5 px-4 text-xs">{row.Outlet} - {row.Cabang}</td>
+                  <td className="py-2.5 px-4 text-xs font-bold text-teal-600">{row.Metode}</td>
+                  <td className="py-2.5 px-4 text-xs">{row.Outlet}</td>
                   <td className="py-2.5 px-4 text-xs">{row.Produk}</td>
                   <td className="py-2.5 px-4 text-xs text-center">{row.Jumlah}</td>
                   <td className="py-2.5 px-4 text-xs text-right">{formatCurrency(row.Harga)}</td>
