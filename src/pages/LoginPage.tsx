@@ -33,13 +33,13 @@ export default function LoginPage() {
     // Try multiple domains for backward compatibility
     const cleanUsername = username.toLowerCase().replace(/[^a-z0-9]/g, '');
     const domains = [INTERNAL_DOMAIN, '@genqupa.internal'];
-    
+
     let lastResult: { success: boolean; error?: string } = { success: false, error: 'ID atau kata sandi salah' };
 
     for (const domain of domains) {
       const email = cleanUsername + domain;
       const result = await login(email, password);
-      
+
       if (result.success) {
         lastResult = result;
         break;
@@ -81,7 +81,7 @@ export default function LoginPage() {
 
         <div className="bg-card rounded-xl shadow-sm p-8 border border-border">
           <h2 className="text-xl font-semibold text-center mb-6">Masuk ke Sistem</h2>
-          
+
           <form onSubmit={handleLogin} className="space-y-4">
             {error && (
               <div className="flex items-center gap-2 p-3 bg-destructive/10 text-destructive rounded-lg text-sm">

@@ -13,8 +13,11 @@ import { Input } from '@/components/ui/input';
 import { Transaction } from '@/types';
 import { Search, ShoppingCart, X, Loader2 } from 'lucide-react';
 
+import { useToast } from '@/hooks/use-toast';
+
 export default function POSPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const { itemCount, addItem, items, total, clearCart } = useCart();
   const outletId = user?.outletId || '';
 
@@ -50,9 +53,18 @@ export default function POSPage() {
   };
 
   const handleCheckoutComplete = async (transaction: Transaction) => {
+    if (!user?.outletId) {
+      toast({
+        title: "Gagal Menjual",
+        description: "Akun Anda belum terhubung ke cabang (outlet) manapun. Silakan lengkapi profil di Manajemen User.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Save transaction to database
     await createTransaction.mutateAsync({
-      outletId: user?.outletId || '',
+      outletId: user.outletId,
       items: transaction.items,
       subtotal: transaction.subtotal,
       total: transaction.total,

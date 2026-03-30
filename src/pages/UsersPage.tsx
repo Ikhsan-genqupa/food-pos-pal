@@ -62,20 +62,18 @@ export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState('all');
 
   const fetchUsers = useCallback(async () => {
-    if (!session?.access_token) return;
+    if (!isAdmin) return;
     setIsLoadingUsers(true);
     try {
-      const { data, error } = await supabase.functions.invoke('list-users', {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
+      const { data, error } = await supabase.rpc('get_all_users' as any);
       if (error) throw error;
-      if (data?.users) setUsers(data.users);
+      if (data) setUsers(data as unknown as UserItem[]);
     } catch (err) {
       console.error('Failed to fetch users:', err);
     } finally {
       setIsLoadingUsers(false);
     }
-  }, [session?.access_token]);
+  }, [isAdmin]);
 
   useEffect(() => {
     if (isAdmin) fetchUsers();
@@ -87,9 +85,16 @@ export default function UsersPage() {
     setIsLoading(true);
 
     try {
+      if (!session?.access_token) {
+        throw new Error('Sesi tidak valid. Silakan login ulang.');
+      }
+
       const response = await supabase.functions.invoke('create-user', {
         body: { username, password, role, outlet_id: outletId === 'none' ? null : outletId },
-        headers: { Authorization: `Bearer ${session?.access_token}` },
+        headers: { 
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
       });
 
       if (response.error) throw new Error(response.error.message || 'Gagal membuat user');
