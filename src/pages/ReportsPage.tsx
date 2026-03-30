@@ -202,6 +202,7 @@ export default function ReportsPage() {
         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
         <style>
           @page { size: auto; margin: 10mm; }
+          html { counter-reset: page; }
           body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             padding: 20px 30px; 
@@ -272,8 +273,10 @@ export default function ReportsPage() {
           }
           .footer-left { text-align: left; }
           .footer-right { text-align: right; }
-          .page-number:after { content: counter(page); }
-          .total-pages:after { content: counter(pages); }
+          .page-number:after { 
+            counter-increment: page;
+            content: counter(page); 
+          }
           
           @media print {
             body { padding-top: 0; }
@@ -371,7 +374,7 @@ export default function ReportsPage() {
             GenQuPa POS &bull; Premium Business Intelligence System
           </div>
           <div class="footer-right">
-            Dicetak pada: ${new Date().toLocaleString('id-ID')} HAL <span class="page-number"></span>/<span class="total-pages"></span>
+            Dicetak pada: ${new Date().toLocaleString('id-ID')} HAL <span class="page-number"></span>
           </div>
         </div>
       </body>

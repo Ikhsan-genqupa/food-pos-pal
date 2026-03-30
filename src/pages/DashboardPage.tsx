@@ -35,6 +35,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
   ResponsiveContainer,
   PieChart,
   Pie,
@@ -102,32 +103,39 @@ export default function DashboardPage() {
     sum + tx.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0
   );
 
-  // Products sold by category (calculated from transactions)
-  const categoryColors = [
-    'hsl(var(--chart-1))',
-    'hsl(var(--chart-2))',
-    'hsl(var(--chart-3))',
-    'hsl(var(--chart-4))',
+  const productColors = [
+    '#0d9488', // Teal
+    '#0ea5e9', // Sky
+    '#f59e0b', // Amber
+    '#8b5cf6', // Violet
+    '#ec4899', // Pink
+    '#10b981', // Emerald
+    '#f43f5e', // Rose
+    '#6366f1', // Indigo
   ];
 
-  const categoryData = categories.map((cat, index) => {
-    let totalSales = 0;
-    filteredTransactions.forEach(tx => {
-      tx.items.forEach(item => {
-        const product = products.find(p => p.id === item.productId);
-        if (product && product.categoryId === cat.id) {
-          totalSales += item.quantity * item.price;
-        }
+  // Calculate Product Sales Data
+  const productMap = new Map<string, { name: string, value: number }>();
+  
+  filteredTransactions.forEach(tx => {
+    tx.items.forEach(item => {
+      const current = productMap.get(item.productId) || { name: item.productName || 'Produk', value: 0 };
+      productMap.set(item.productId, {
+        name: current.name,
+        value: current.value + (item.quantity * item.price)
       });
     });
-    return {
-      name: cat.name,
-      value: totalSales,
-      color: categoryColors[index] || 'hsl(var(--chart-1))',
-    };
   });
 
-  const totalCategorySales = categoryData.reduce((sum, cat) => sum + cat.value, 0);
+  const productData = Array.from(productMap.values())
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 8) // Show top 8 products
+    .map((item, index) => ({
+      ...item,
+      color: productColors[index % productColors.length]
+    }));
+
+  const totalProductSales = productData.reduce((sum, p) => sum + p.value, 0);
 
   // Daily sales chart data
   const dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
@@ -303,6 +311,15 @@ export default function DashboardPage() {
                     return [formatCurrency(value), outletName];
                   }}
                 />
+                {isAdmin && selectedOutlet === 'all' && (
+                  <Legend 
+                    verticalAlign="top" 
+                    align="right" 
+                    height={36} 
+                    iconType="circle"
+                    wrapperStyle={{ fontSize: '11px', fontWeight: 'bold', paddingTop: '0px' }}
+                  />
+                )}
                 {isAdmin && selectedOutlet === 'all' ? (
                   outlets.map((outlet, index) => (
                     <Bar
@@ -326,14 +343,14 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Category chart */}
+        {/* Product chart */}
         <div className="stat-card">
-          <h3 className="font-medium text-foreground mb-4">Penjualan per Kategori</h3>
+          <h3 className="font-medium text-foreground mb-4">Penjualan per Produk</h3>
           <div className="h-56 flex items-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={categoryData}
+                  data={productData}
                   cx="50%"
                   cy="50%"
                   innerRadius={50}
@@ -341,7 +358,7 @@ export default function DashboardPage() {
                   paddingAngle={2}
                   dataKey="value"
                 >
-                  {categoryData.map((entry, index) => (
+                  {productData.map((entry, index) => (
                     <Cell key={index} fill={entry.color} />
                   ))}
                 </Pie>
@@ -352,19 +369,20 @@ export default function DashboardPage() {
                     borderRadius: '6px',
                     fontSize: '12px',
                   }}
+                  formatter={(value: number) => [formatCurrency(value), 'Omzet']}
                 />
               </PieChart>
             </ResponsiveContainer>
-            <div className="space-y-2 pr-4">
-              {categoryData.map((item) => (
-                <div key={item.name} className="flex items-center gap-2 text-xs">
+            <div className="space-y-1.5 pr-4 max-h-56 overflow-y-auto w-48">
+              {productData.map((item) => (
+                <div key={item.name} className="flex items-center gap-2 text-[10px]">
                   <div
-                    className="h-2.5 w-2.5 rounded-full"
+                    className="h-2 w-2 rounded-full flex-shrink-0"
                     style={{ backgroundColor: item.color }}
                   />
-                  <span className="text-muted-foreground">{item.name}</span>
-                  <span className="font-medium">
-                    {totalCategorySales > 0 ? Math.round((item.value / totalCategorySales) * 100) : 0}%
+                  <span className="text-muted-foreground truncate flex-1">{item.name}</span>
+                  <span className="font-bold">
+                    {totalProductSales > 0 ? Math.round((item.value / totalProductSales) * 100) : 0}%
                   </span>
                 </div>
               ))}
