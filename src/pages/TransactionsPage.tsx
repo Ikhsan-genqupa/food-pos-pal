@@ -29,6 +29,14 @@ export default function TransactionsPage() {
   const [selectedOutlet, setSelectedOutlet] = useState<string>(
     isAdmin ? 'all' : (user?.outletId || '')
   );
+
+  // Sync selected outlet with user profile once loaded
+  React.useEffect(() => {
+    if (!isAdmin && user?.outletId) {
+      setSelectedOutlet(user.outletId);
+    }
+  }, [user?.outletId, isAdmin]);
+
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   
   // Use real data hook

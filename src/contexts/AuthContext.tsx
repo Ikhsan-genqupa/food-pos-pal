@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .from('user_roles')
       .select('role')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
     
     if (error || !data) {
       console.error('Error fetching user role:', error);
@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .from('profiles')
       .select('outlet_id, outlets(name)')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
     
     if (error || !data) {
       return {};

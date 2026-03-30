@@ -18,6 +18,12 @@ export function useTransactions(outletId?: string) {
   return useQuery({
     queryKey: ['transactions', outletId],
     queryFn: async (): Promise<Transaction[]> => {
+      // Fail-safe: if no outletId is provided and we're not explicitly asking for 'all',
+      // we should probably not return anything to prevent data leakage.
+      if (!outletId) {
+        return [];
+      }
+
       let query = supabase
         .from('transactions')
         .select(`
@@ -38,7 +44,7 @@ export function useTransactions(outletId?: string) {
         `)
         .order('created_at', { ascending: false });
 
-      if (outletId && outletId !== 'all') {
+      if (outletId !== 'all') {
         query = query.eq('outlet_id', outletId);
       }
 

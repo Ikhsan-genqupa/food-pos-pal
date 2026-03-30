@@ -53,7 +53,15 @@ export default function DashboardPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // Fetch real data
+  // Sync selected outlet with user profile once loaded
+  React.useEffect(() => {
+    if (!isAdmin && user?.outletId) {
+      setSelectedOutlet(user.outletId);
+    }
+  }, [user?.outletId, isAdmin]);
+
+  // Fetch real data. We only pass selectedOutlet if it's not empty, 
+  // or 'all' for admin. This matches our hook guards.
   const { data: transactions = [], isLoading: txLoading } = useTransactions(selectedOutlet);
   const { data: stocks = [] } = useStocks(selectedOutlet);
   const { data: outlets = [] } = useOutlets();

@@ -34,6 +34,14 @@ export default function ReportsPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   const [selectedOutlet, setSelectedOutlet] = useState<string>(isAdmin ? 'all' : (user?.outletId || ''));
+
+  // Sync selected outlet with user profile once loaded
+  React.useEffect(() => {
+    if (!isAdmin && user?.outletId) {
+      setSelectedOutlet(user.outletId);
+    }
+  }, [user?.outletId, isAdmin]);
+
   const formatYMD = (date: Date) => {
     const d = new Date(date);
     d.setMinutes(d.getMinutes() - d.getTimezoneOffset());

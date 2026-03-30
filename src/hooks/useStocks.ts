@@ -7,6 +7,12 @@ export function useStocks(outletId?: string) {
   return useQuery({
     queryKey: ['stocks', outletId],
     queryFn: async (): Promise<Stock[]> => {
+      // Fail-safe: if no outletId is provided and we're not asking for 'all',
+      // return empty to prevent global stocks data leakage.
+      if (!outletId) {
+        return [];
+      }
+
       let query = supabase
         .from('stocks')
         .select(`
@@ -22,7 +28,7 @@ export function useStocks(outletId?: string) {
           )
         `);
 
-      if (outletId && outletId !== 'all') {
+      if (outletId !== 'all') {
         query = query.eq('outlet_id', outletId);
       }
 
