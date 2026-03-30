@@ -127,22 +127,24 @@ export default function ReportsPage() {
           .summary-item .value { font-size: 22px; font-weight: 700; color: #0d9488; margin-bottom: 4px; }
           .summary-item .label { font-size: 10px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
           
-          table { width: 100%; border-collapse: collapse; margin-top: 10px; border-radius: 12px; overflow: hidden; border-style: hidden; box-shadow: 0 0 0 1px #f3f4f6; }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; border-radius: 12px; overflow: hidden; border-style: hidden; box-shadow: 0 0 0 1px #f3f4f6; table-layout: auto; }
           th { 
             background-color: #0d9488; 
             color: white; 
             text-align: left; 
-            padding: 14px 16px; 
-            font-size: 11px; 
+            padding: 12px 14px; 
+            font-size: 10px; 
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
+            white-space: nowrap;
           }
           td { 
-            padding: 14px 16px; 
+            padding: 12px 14px; 
             border-bottom: 1px solid #f3f4f6; 
-            font-size: 11px; 
+            font-size: 10px; 
             color: #374151;
+            white-space: nowrap;
           }
           tr:last-child td { border-bottom: none; }
           tr:nth-child(even) { background-color: #fcfcfc; }
@@ -203,7 +205,7 @@ export default function ReportsPage() {
           <tbody>
             ${exportData.map(row => `
               <tr>
-                <td style="white-space: nowrap;">${row.Tanggal}</td>
+                <td>${row.Tanggal}</td>
                 <td style="font-family: monospace; color: #6b7280;">${row['ID Transaksi']}</td>
                 <td>${row.Outlet}</td>
                 <td style="font-weight: 600; color: #111827;">${row.Produk}</td>
