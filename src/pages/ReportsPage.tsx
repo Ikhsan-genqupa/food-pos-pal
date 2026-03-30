@@ -478,14 +478,14 @@ export default function ReportsPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/50">
-                <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground whitespace-nowrap">Tanggal</th>
-                <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground whitespace-nowrap">ID Transaksi</th>
-                <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground whitespace-nowrap">Metode</th>
-                <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground whitespace-nowrap">Outlet</th>
-                <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground whitespace-nowrap">Produk</th>
-                <th className="text-center py-2.5 px-4 text-xs font-medium text-muted-foreground">Jml</th>
-                <th className="text-right py-2.5 px-4 text-xs font-medium text-muted-foreground">Harga</th>
-                <th className="text-right py-2.5 px-4 text-xs font-medium text-muted-foreground">Total</th>
+                <th className="text-left py-2.5 px-4 text-[10px] font-bold text-muted-foreground whitespace-nowrap uppercase tracking-wider">Tanggal</th>
+                <th className="text-left py-2.5 px-4 text-[10px] font-bold text-muted-foreground whitespace-nowrap uppercase tracking-wider">ID Transaksi</th>
+                <th className="text-left py-2.5 px-4 text-[10px] font-bold text-muted-foreground whitespace-nowrap uppercase tracking-wider">Metode</th>
+                <th className="text-left py-2.5 px-4 text-[10px] font-bold text-muted-foreground whitespace-nowrap uppercase tracking-wider">Outlet</th>
+                <th className="text-left py-2.5 px-4 text-[10px] font-bold text-muted-foreground whitespace-nowrap uppercase tracking-wider">Produk</th>
+                <th className="text-center py-2.5 px-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Jml</th>
+                <th className="text-right py-2.5 px-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Harga</th>
+                <th className="text-right py-2.5 px-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Total</th>
               </tr>
             </thead>
             <tbody>
@@ -498,10 +498,18 @@ export default function ReportsPage() {
                   <td className="py-2.5 px-4 text-[10px] font-medium">{row.Produk}</td>
                   <td className="py-2.5 px-4 text-[10px] text-center font-bold">{row.Jumlah}</td>
                   <td className="py-2.5 px-4 text-[10px] text-right">{formatCurrency(row.Harga)}</td>
-                  <td className="py-2.5 px-4 text-[10px] text-right font-bold text-teal-700">{formatCurrency(row.Total)}</td>
+                  <td className="py-2.5 px-4 text-[10px] text-right font-bold text-teal-700 whitespace-nowrap">{formatCurrency(row.Total)}</td>
                 </tr>
               ))}
             </tbody>
+            {exportData.length > 0 && (
+              <tfoot className="bg-muted/30 font-black">
+                <tr>
+                  <td colSpan={7} className="py-3 px-4 text-right text-[11px] uppercase tracking-widest text-muted-foreground">Total Terhitung</td>
+                  <td className="py-3 px-4 text-right text-[12px] text-teal-700 whitespace-nowrap">{formatCurrency(totalRevenue)}</td>
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
         {exportData.length === 0 && (

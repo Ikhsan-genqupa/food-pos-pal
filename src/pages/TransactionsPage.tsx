@@ -44,6 +44,22 @@ export default function TransactionsPage() {
     window.print();
   };
 
+  const getPaymentLabel = (method: string | undefined | null) => {
+    if (!method) return '-';
+    const m = String(method).toLowerCase();
+    switch (m) {
+      case 'cash':
+      case 'tunai': return 'Tunai';
+      case 'qris': return 'QRIS';
+      case 'ovo': return 'OVO';
+      case 'gopay': return 'GoPay';
+      case 'dana': return 'Dana';
+      case 'debit': return 'Debit';
+      case 'kredit': return 'Kredit';
+      default: return m.toUpperCase();
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -197,17 +213,27 @@ export default function TransactionsPage() {
                     <span>Subtotal</span>
                     <span>{formatCurrency(selectedTransaction.subtotal)}</span>
                   </div>
-                  <div className="flex justify-between font-bold text-sm">
+                  <div className="flex justify-between font-bold text-sm border-t border-dashed border-border pt-2 mt-2">
                     <span>TOTAL</span>
                     <span>{formatCurrency(selectedTransaction.total)}</span>
                   </div>
-                  <div className="flex justify-between text-[11px]">
-                    <span>Tunai</span>
-                    <span>{formatCurrency(selectedTransaction.cashReceived)}</span>
-                  </div>
-                  <div className="flex justify-between text-[11px]">
-                    <span>Kembalian</span>
-                    <span>{formatCurrency(selectedTransaction.change)}</span>
+                  <div className="pt-2 space-y-1">
+                    <div className="flex justify-between text-[11px] items-center">
+                      <span className="text-muted-foreground uppercase font-bold tracking-tighter">Metode</span>
+                      <span className="font-bold text-foreground">{getPaymentLabel(selectedTransaction.paymentMethod)}</span>
+                    </div>
+                    {selectedTransaction.paymentMethod === 'tunai' && (
+                      <>
+                        <div className="flex justify-between text-[11px]">
+                          <span className="text-muted-foreground">Uang Diterima</span>
+                          <span>{formatCurrency(selectedTransaction.cashReceived)}</span>
+                        </div>
+                        <div className="flex justify-between text-[11px] pb-1">
+                          <span className="text-muted-foreground">Kembalian</span>
+                          <span className="font-bold">{formatCurrency(selectedTransaction.change)}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 
