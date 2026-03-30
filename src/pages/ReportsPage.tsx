@@ -14,7 +14,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { FileSpreadsheet, FileText, Filter, Store } from 'lucide-react';
+import { FileSpreadsheet, FileText, Filter, Store, TrendingUp, Receipt, ShoppingBag, Wallet } from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as ChartTooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
 import logo from '@/assets/logo.png';
 
 export default function ReportsPage() {
@@ -42,16 +55,22 @@ export default function ReportsPage() {
     const start = new Date(today);
     const day = start.getDay(); 
     const diff = start.getDate() - day + (day === 0 ? -6 : 1); // Monday
+    start.setHours(0,0,0,0);
     start.setDate(diff);
+    
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6); // Sunday
+    
     setStartDate(formatYMD(start));
-    setEndDate(formatYMD(today));
+    setEndDate(formatYMD(end));
     setFilterType('week');
   };
 
   const setThisMonth = () => {
     const start = new Date(today.getFullYear(), today.getMonth(), 1);
+    const end = new Date(today.getFullYear(), today.getMonth() + 1, 0); // Last day of month
     setStartDate(formatYMD(start));
-    setEndDate(formatYMD(today));
+    setEndDate(formatYMD(end));
     setFilterType('month');
   };
 
@@ -145,6 +164,95 @@ export default function ReportsPage() {
     avg: val.transactions.size > 0 ? val.revenue / val.transactions.size : 0
   })).sort((a, b) => b.revenue - a.revenue) : [];
 
+  const productColors = [
+    '#0d9488', // Teal
+    '#0ea5e9', // Sky
+    '#f59e0b', // Amber
+    '#8b5cf6', // Violet
+    '#ec4899', // Pink
+    '#10b981', // Emerald
+    '#f43f5e', // Rose
+    '#6366 indigo', // Indigo but better color
+  ];
+
+  const productMap = new Map<string, { name: string, value: number }>();
+  filteredTransactions.forEach(tx => {
+    tx.items.forEach(item => {
+      const current = productMap.get(item.productId) || { name: item.productName || 'Produk', value: 0 };
+      productMap.set(item.productId, {
+        name: current.name,
+        value: current.value + item.total
+      });
+    });
+  });
+
+  const productData = Array.from(productMap.values())
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 8)
+    .map((item, index) => ({
+      ...item,
+      color: productColors[index % productColors.length]
+    }));
+
+  const totalProductSales = productData.reduce((sum, p) => sum + p.value, 0);
+
+  const outletColors = [
+    '#0d9488', // Teal
+    '#0ea5e9', // Sky
+    '#f59e0b', // Amber
+    '#8b5cf6', // Violet
+    '#ec4899', // Pink
+  ];
+
+  // Generate All Dates in Range for the Chart
+  const getDatesInRange = (start: string, end: string) => {
+    const dates = [];
+    let current = new Date(start);
+    const last = new Date(end);
+    
+    // Safety break
+    let count = 0;
+    while (current <= last && count < 100) {
+      dates.push(new Date(current));
+      current.setDate(current.getDate() + 1);
+      count++;
+    }
+    return dates;
+  };
+
+  const allDatesInRange = getDatesInRange(startDate, endDate);
+  
+  const sortedDailyData = allDatesInRange.map(date => {
+    const dKey = formatYMD(date);
+    const entry: any = {
+      dKey,
+      date: formatDateShort(date),
+      total: 0,
+      sales: 0
+    };
+    
+    // Initialize outlet keys if in "all" mode
+    if (isAdmin && selectedOutlet === 'all') {
+      outlets.forEach(o => {
+        entry[o.id] = 0;
+      });
+    }
+
+    // Fill data
+    filteredTransactions.forEach(tx => {
+      if (formatYMD(tx.createdAt) === dKey) {
+        if (isAdmin && selectedOutlet === 'all') {
+          entry[tx.outletId] = (entry[tx.outletId] || 0) + tx.total;
+        } else {
+          entry.sales += tx.total;
+        }
+        entry.total += tx.total;
+      }
+    });
+
+    return entry;
+  });
+
   const handleExportExcel = () => {
     const headers = ['Tanggal', 'ID Transaksi', 'Outlet', 'Cabang', 'Produk', 'Metode', 'Jumlah', 'Harga', 'Total'];
     const csvContent = [
@@ -197,6 +305,11 @@ export default function ReportsPage() {
     const periodeTitle = formatPeriodeIndo(startDate, endDate);
     const documentTitle = `Laporan Penjualan - ${outletInfo} - ${periodeTitle}`;
 
+    // Get SVG charts for PDF
+    const barChartSvg = document.querySelector('.bar-chart-container svg')?.outerHTML || '';
+    const pieChartSvg = document.querySelector('.pie-chart-container svg')?.outerHTML || '';
+    const productLegendHtml = document.querySelector('.pie-legend-container')?.innerHTML || '';
+
     const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -204,12 +317,15 @@ export default function ReportsPage() {
         <title>${documentTitle}</title>
         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
         <style>
-          @page { size: auto; margin: 10mm; }
+          @page { 
+            size: auto; 
+            margin: 10mm; 
+          }
           html { counter-reset: page; }
           body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
-            padding: 20px 30px; 
-            padding-bottom: 80px; 
+            padding: 0; 
+            margin: 0;
             color: #1a1a1a;
             background-color: white;
             line-height: 1.4;
@@ -234,9 +350,50 @@ export default function ReportsPage() {
           .summary-item .value { font-size: 20px; font-weight: 700; color: #0d9488; margin-bottom: 2px; }
           .summary-item .label { font-size: 9px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
           
-          .section-title { font-size: 11px; font-weight: 800; text-transform: uppercase; margin: 30px 0 12px; color: #374151; border-bottom: 2px solid #0d9488; display: inline-block; padding-bottom: 3px; }
+          .charts-grid {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 10mm;
+          }
+          .chart-box {
+            flex: 1;
+            border: 1px solid #f3f4f6;
+            border-radius: 12px;
+            padding: 15px;
+            background: white;
+          }
+          .chart-title {
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #374151;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+          .chart-container {
+            width: 100%;
+            height: 180px;
+          }
+          .chart-container svg {
+            width: 100%;
+            height: 100%;
+          }
+          .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 8px;
+            margin-bottom: 3px;
+          }
+          .legend-color {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+          }
           
-          table { width: 100%; border-collapse: collapse; margin-top: 5px; border-radius: 8px; overflow: hidden; border-style: hidden; box-shadow: 0 0 0 1px #f3f4f6; table-layout: auto; }
+          .section-title { font-size: 11px; font-weight: 800; text-transform: uppercase; margin: 5mm 0 0; color: #374151; border-bottom: 2px solid #0d9488; display: inline-block; padding-bottom: 3px; }
+          
+          table { width: 100%; border-collapse: collapse; margin-top: 0; border-radius: 8px; overflow: hidden; border-style: hidden; box-shadow: 0 0 0 1px #f3f4f6; table-layout: auto; }
           th { 
             background-color: #0d9488; 
             color: white; 
@@ -257,6 +414,16 @@ export default function ReportsPage() {
           }
           tr:last-child td { border-bottom: none; }
           tr:nth-child(even) { background-color: #fcfcfc; }
+          
+          .thead-spacer { 
+            height: 5mm; 
+            border: none !important; 
+          }
+          .thead-spacer td { 
+            border: none !important; 
+            padding: 0 !important;
+            height: 5mm;
+          }
           
           .footer { 
             position: fixed;
@@ -286,6 +453,7 @@ export default function ReportsPage() {
             .summary-container { -webkit-print-color-adjust: exact; background-color: #f9fafb !important; }
             th { -webkit-print-color-adjust: exact; background-color: #0d9488 !important; color: white !important; }
             .footer { position: fixed; bottom: 0; border-top: 1px solid #f3f4f6; }
+            .charts-grid { page-break-inside: avoid; }
           }
         </style>
       </head>
@@ -312,10 +480,31 @@ export default function ReportsPage() {
           </div>
         </div>
 
+        <div class="charts-grid">
+          <div class="chart-box">
+            <div class="chart-title">Tren Penjualan</div>
+            <div class="chart-container">
+              ${barChartSvg}
+            </div>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">Proporsi Produk</div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div class="chart-container" style="flex: 1;">
+                ${pieChartSvg}
+              </div>
+              <div style="flex: 1; max-height: 180px; overflow: hidden;">
+                ${productLegendHtml}
+              </div>
+            </div>
+          </div>
+        </div>
+
         ${selectedOutlet === 'all' ? `
           <div class="section-title">Ringkasan Per Outlet</div>
           <table style="margin-bottom: 25px;">
             <thead>
+              <tr class="thead-spacer"><td colspan="4"></td></tr>
               <tr>
                 <th>Nama Outlet</th>
                 <th style="text-align: center;">Jml Transaksi</th>
@@ -336,9 +525,10 @@ export default function ReportsPage() {
           </table>
         ` : ''}
 
-        <div class="section-title">Detail Transaksi</div>
+        <div class="section-title" style="page-break-before: auto;">Detail Transaksi</div>
         <table>
           <thead>
+            <tr class="thead-spacer"><td colspan="8"></td></tr>
             <tr>
               <th>Tanggal</th>
               <th>ID Transaksi</th>
@@ -564,6 +754,117 @@ export default function ReportsPage() {
         <div className="stat-card text-center">
           <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1">Rata-rata Transaksi</p>
           <p className="text-2xl font-black text-foreground">{formatCurrency(avgTransaction)}</p>
+        </div>
+      </div>
+
+      {/* Charts Visualization */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Sales chart */}
+        <div className="stat-card">
+          <h3 className="font-medium text-foreground mb-4">Grafik Penjualan</h3>
+          <div className="h-56 bar-chart-container">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={sortedDailyData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fill: '#6b7280', fontSize: 10 }}
+                />
+                <YAxis
+                  tick={{ fill: '#6b7280', fontSize: 10 }}
+                  tickFormatter={(value) => `${value / 1000}K`}
+                />
+                <ChartTooltip
+                  contentStyle={{
+                    backgroundColor: '#fff',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                  }}
+                  formatter={(value: number, name: string) => {
+                    const label = isAdmin && selectedOutlet === 'all' 
+                      ? (outlets.find(o => o.id === name)?.name || name)
+                      : 'Penjualan';
+                    return [formatCurrency(value), label];
+                  }}
+                />
+                {isAdmin && selectedOutlet === 'all' && (
+                  <Legend 
+                    verticalAlign="top" 
+                    align="right" 
+                    iconType="circle"
+                    wrapperStyle={{ fontSize: '10px', fontWeight: 'bold' }}
+                  />
+                )}
+                {isAdmin && selectedOutlet === 'all' ? (
+                  outlets.map((outlet, index) => (
+                    <Bar
+                      key={outlet.id}
+                      dataKey={outlet.id}
+                      name={outlet.name}
+                      stackId="a"
+                      fill={outletColors[index % outletColors.length]}
+                    />
+                  ))
+                ) : (
+                  <Bar
+                    dataKey="sales"
+                    fill="#0d9488"
+                    radius={[4, 4, 0, 0]}
+                  />
+                )}
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Product chart */}
+        <div className="stat-card">
+          <h3 className="font-medium text-foreground mb-4">Penjualan per Produk</h3>
+          <div className="flex flex-col sm:flex-row items-center gap-4 min-h-[224px]">
+            <div className="w-full sm:w-1/2 h-56 pie-chart-container">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={productData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={70}
+                    paddingAngle={2}
+                    dataKey="value"
+                  >
+                    {productData.map((entry, index) => (
+                      <Cell key={index} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <ChartTooltip
+                    contentStyle={{
+                      backgroundColor: '#fff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '6px',
+                      fontSize: '11px',
+                    }}
+                    formatter={(value: number) => [formatCurrency(value), 'Omzet']}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="w-full sm:w-1/2 space-y-1.5 max-h-56 overflow-y-auto pr-2 pie-legend-container custom-scrollbar">
+              {productData.map((item) => (
+                <div key={item.name} className="legend-item flex items-center gap-2 py-1 border-b border-border/30 last:border-0">
+                  <div
+                    className="legend-color h-2 w-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="text-muted-foreground font-medium flex-1 text-[10px] leading-tight">{item.name}</span>
+                  <span className="font-bold text-foreground text-[10px]">
+                    {totalProductSales > 0 ? Math.round((item.value / totalProductSales) * 100) : 0}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
