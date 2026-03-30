@@ -98,32 +98,82 @@ export default function ReportsPage() {
       <html>
       <head>
         <title>Laporan Penjualan - ${outletInfo}</title>
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
         <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
-          .header { text-align: center; margin-bottom: 30px; }
-          .header img { height: 50px; margin-bottom: 10px; }
-          .header h1 { margin: 0; font-size: 24px; }
-          .header p { margin: 5px 0; color: #666; }
-          .summary { display: flex; justify-content: space-around; margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 8px; }
-          .summary-item { text-align: center; }
-          .summary-item .value { font-size: 20px; font-weight: bold; color: #0d9488; }
-          .summary-item .label { font-size: 12px; color: #666; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
-          th { background: #0d9488; color: white; }
-          tr:nth-child(even) { background: #f9f9f9; }
-          .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+          body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            padding: 40px; 
+            color: #1a1a1a;
+            background-color: white;
+            line-height: 1.5;
+          }
+          .header { text-align: center; margin-bottom: 40px; }
+          .header h1 { margin: 0; font-size: 32px; font-weight: 800; color: #000; letter-spacing: -1px; }
+          .header .report-title { margin: 10px 0 5px; font-size: 18px; font-weight: 600; color: #4b5563; text-transform: uppercase; letter-spacing: 1px; }
+          .header .outlet-name { margin: 0; font-size: 16px; color: #6b7280; }
+          .header .periode { margin: 5px 0 0; font-size: 13px; color: #9ca3af; }
+          
+          .summary-container {
+            background-color: #f9fafb;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 35px;
+            display: flex;
+            justify-content: space-between;
+            border: 1px solid #f3f4f6;
+          }
+          .summary-item { text-align: center; flex: 1; }
+          .summary-item:not(:last-child) { border-right: 1px solid #e5e7eb; }
+          .summary-item .value { font-size: 22px; font-weight: 700; color: #0d9488; margin-bottom: 4px; }
+          .summary-item .label { font-size: 10px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
+          
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; border-radius: 12px; overflow: hidden; border-style: hidden; box-shadow: 0 0 0 1px #f3f4f6; }
+          th { 
+            background-color: #0d9488; 
+            color: white; 
+            text-align: left; 
+            padding: 14px 16px; 
+            font-size: 11px; 
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+          }
+          td { 
+            padding: 14px 16px; 
+            border-bottom: 1px solid #f3f4f6; 
+            font-size: 11px; 
+            color: #374151;
+          }
+          tr:last-child td { border-bottom: none; }
+          tr:nth-child(even) { background-color: #fcfcfc; }
+          
+          .footer { 
+            text-align: center; 
+            margin-top: 60px; 
+            font-size: 10px; 
+            color: #9ca3af; 
+            border-top: 1px solid #f3f4f6;
+            padding-top: 25px;
+            letter-spacing: 0.5px;
+          }
+          .footer p { margin: 5px 0; }
+          
+          @media print {
+            body { padding: 0; }
+            .summary-container { -webkit-print-color-adjust: exact; background-color: #f9fafb !important; }
+            th { -webkit-print-color-adjust: exact; background-color: #0d9488 !important; color: white !important; }
+          }
         </style>
       </head>
       <body>
         <div class="header">
           <h1>GenQuPa POS</h1>
-          <p><strong>Laporan Penjualan</strong></p>
-          <p>${outletInfo}</p>
-          <p>Periode: ${startDate || 'Semua'} - ${endDate || 'Semua'}</p>
+          <p class="report-title">Laporan Penjualan</p>
+          <p class="outlet-name">${outletInfo}</p>
+          <p class="periode">Periode: ${startDate || 'Semua'} - ${endDate || 'Semua'}</p>
         </div>
 
-        <div class="summary">
+        <div class="summary-container">
           <div class="summary-item">
             <div class="value">Rp ${totalRevenue.toLocaleString('id-ID')}</div>
             <div class="label">Total Pendapatan</div>
@@ -145,21 +195,21 @@ export default function ReportsPage() {
               <th>ID Transaksi</th>
               <th>Outlet</th>
               <th>Produk</th>
-              <th>Jml</th>
-              <th>Harga</th>
-              <th>Total</th>
+              <th style="text-align: center;">Jml</th>
+              <th style="text-align: right;">Harga</th>
+              <th style="text-align: right;">Total</th>
             </tr>
           </thead>
           <tbody>
             ${exportData.map(row => `
               <tr>
-                <td>${row.Tanggal}</td>
-                <td>${row['ID Transaksi']}</td>
-                <td>${row.Outlet} - ${row.Cabang}</td>
-                <td>${row.Produk}</td>
-                <td>${row.Jumlah}</td>
-                <td>Rp ${row.Harga.toLocaleString('id-ID')}</td>
-                <td>Rp ${row.Total.toLocaleString('id-ID')}</td>
+                <td style="white-space: nowrap;">${row.Tanggal}</td>
+                <td style="font-family: monospace; color: #6b7280;">${row['ID Transaksi']}</td>
+                <td>${row.Outlet}</td>
+                <td style="font-weight: 600; color: #111827;">${row.Produk}</td>
+                <td style="text-align: center; font-weight: 500;">${row.Jumlah}</td>
+                <td style="text-align: right;">Rp ${row.Harga.toLocaleString('id-ID')}</td>
+                <td style="text-align: right; font-weight: 700; color: #0d9488;">Rp ${row.Total.toLocaleString('id-ID')}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -167,7 +217,7 @@ export default function ReportsPage() {
 
         <div class="footer">
           <p>Dicetak pada: ${new Date().toLocaleString('id-ID')}</p>
-          <p>GenQuPa POS System</p>
+          <p>GenQuPa POS &bull; Premium Business Intelligence System</p>
         </div>
       </body>
       </html>
