@@ -43,7 +43,24 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
     { to: '/reports', icon: BarChart3, label: 'Laporan' },
   ];
 
-  const links = isAdmin ? adminLinks : outletLinks;
+  const cashierLinks = [
+    { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/pos', icon: ShoppingCart, label: 'Penjualan' },
+    { to: '/products', icon: Package, label: 'Produk' },
+    { to: '/stock', icon: Package, label: 'Stok' },
+    { to: '/transactions', icon: History, label: 'Transaksi' },
+  ];
+
+  const getLinks = () => {
+    switch (user?.role) {
+      case 'admin': return adminLinks;
+      case 'kasir': return cashierLinks;
+      case 'outlet': return outletLinks;
+      default: return [];
+    }
+  };
+
+  const links = getLinks();
 
   return (
     <>
