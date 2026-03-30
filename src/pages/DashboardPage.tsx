@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { transactions, outlets, products, categories, formatCurrency, formatDate, getTransactionsByOutlet } from '@/data/mockData';
+import { useTransactions } from '@/hooks/useTransactions';
+import { useOutlets } from '@/hooks/useOutlets';
+import { useActiveProducts } from '@/hooks/useProducts';
+import { useCategories } from '@/hooks/useCategories';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import StatCard from '@/components/dashboard/StatCard';
 import {
   ShoppingCart,
-  DollarSign,
-  Calendar,
-  Package,
   ArrowRight,
   TrendingUp,
   Receipt,
   ShoppingBag,
   Wallet,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -25,140 +27,97 @@ import {
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts';
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const isAdmin = user?.role === 'admin';
-  
-  // Admin filters
-  const [selectedOutlet, setSelectedOutlet] = useState<string>('all');
+
+  const [selectedOutlet, setSelectedOutlet] = useState(isAdmin ? 'all' : (user?.outletId || ''));
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // Get transactions based on role and filter
+  const { data: transactions = [], isLoading: txLoading } = useTransactions(selectedOutlet);
+  const { data: outlets = [] } = useOutlets();
+  const { data: products = [] } = useActiveProducts();
+  const { data: categories = [] } = useCategories();
+
+  const isLoading = txLoading;
+
   const getFilteredTransactions = () => {
-    let txList = isAdmin 
-      ? getTransactionsByOutlet(selectedOutlet) 
-      : getTransactionsByOutlet(user?.outletId || '');
-    
-    // Apply date filters
-    if (startDate) {
-      const start = new Date(startDate);
-      txList = txList.filter(tx => tx.createdAt >= start);
-    }
-    if (endDate) {
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-      txList = txList.filter(tx => tx.createdAt <= end);
-    }
-    
+    let txList = [...transactions];
+    if (startDate) { const start = new Date(startDate); txList = txList.filter(tx => tx.createdAt >= start); }
+    if (endDate) { const end = new Date(endDate); end.setHours(23, 59, 59, 999); txList = txList.filter(tx => tx.createdAt <= end); }
     return txList;
   };
 
   const filteredTransactions = getFilteredTransactions();
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const currentMonth = new Date(); currentMonth.setDate(1); currentMonth.setHours(0, 0, 0, 0);
 
-  const currentMonth = new Date();
-  currentMonth.setDate(1);
-  currentMonth.setHours(0, 0, 0, 0);
-
-  // Stats
   const totalRevenue = filteredTransactions.reduce((sum, tx) => sum + tx.total, 0);
   const totalTransactions = filteredTransactions.length;
-  
-  const dailyCash = filteredTransactions
-    .filter((tx) => tx.createdAt >= today)
-    .reduce((sum, tx) => sum + tx.total, 0);
-    
-  const monthlyCash = filteredTransactions
-    .filter((tx) => tx.createdAt >= currentMonth)
-    .reduce((sum, tx) => sum + tx.total, 0);
+  const dailyCash = filteredTransactions.filter((tx) => tx.createdAt >= today).reduce((sum, tx) => sum + tx.total, 0);
+  const monthlyCash = filteredTransactions.filter((tx) => tx.createdAt >= currentMonth).reduce((sum, tx) => sum + tx.total, 0);
+  const productsSold = filteredTransactions.reduce((sum, tx) => sum + tx.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0);
 
-  const productsSold = filteredTransactions.reduce((sum, tx) => 
-    sum + tx.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0
-  );
+  const productColors = ['#0d9488', '#0ea5e9', '#f59e0b', '#8b5cf6', '#ec4899', '#10b981', '#f43f5e', '#6366f1'];
 
-  // Products sold by category (calculated from transactions)
-  const categoryColors = [
-    'hsl(var(--chart-1))',
-    'hsl(var(--chart-2))',
-    'hsl(var(--chart-3))',
-    'hsl(var(--chart-4))',
-  ];
-
-  const categoryData = categories.map((cat, index) => {
-    let totalSales = 0;
-    filteredTransactions.forEach(tx => {
-      tx.items.forEach(item => {
-        const product = products.find(p => p.id === item.productId);
-        if (product && product.categoryId === cat.id) {
-          totalSales += item.quantity * item.price;
-        }
-      });
+  const productMap = new Map<string, { name: string; value: number }>();
+  filteredTransactions.forEach(tx => {
+    tx.items.forEach(item => {
+      const current = productMap.get(item.productId) || { name: item.productName || 'Produk', value: 0 };
+      productMap.set(item.productId, { name: current.name, value: current.value + (item.quantity * item.price) });
     });
-    return {
-      name: cat.name,
-      value: totalSales,
-      color: categoryColors[index] || 'hsl(var(--chart-1))',
-    };
   });
 
-  const totalCategorySales = categoryData.reduce((sum, cat) => sum + cat.value, 0);
+  const productData = Array.from(productMap.values()).sort((a, b) => b.value - a.value).slice(0, 8)
+    .map((item, index) => ({ ...item, color: productColors[index % productColors.length] }));
+  const totalProductSales = productData.reduce((sum, p) => sum + p.value, 0);
 
-  // Daily sales chart data
-  const dailySalesData = [
-    { day: 'Sen', sales: 0 },
-    { day: 'Sel', sales: 0 },
-    { day: 'Rab', sales: 0 },
-    { day: 'Kam', sales: 0 },
-    { day: 'Jum', sales: 0 },
-    { day: 'Sab', sales: 0 },
-    { day: 'Min', sales: 0 },
-  ];
+  const dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+  const dayMap = [6, 0, 1, 2, 3, 4, 5];
+  const dailySalesData = dayNames.map(day => ({
+    day, total: 0,
+    ...(isAdmin && selectedOutlet === 'all' ? outlets.reduce((acc, o) => ({ ...acc, [o.id]: 0 }), {}) : { sales: 0 })
+  }));
 
-  // Get outlet name for display
-  const getOutletDisplayName = () => {
-    if (isAdmin) {
-      if (selectedOutlet === 'all') return 'Semua Outlet';
-      const outlet = outlets.find(o => o.id === selectedOutlet);
-      return outlet?.name || '';
+  filteredTransactions.forEach(tx => {
+    const dayIndex = dayMap[tx.createdAt.getDay()];
+    if (isAdmin && selectedOutlet === 'all') {
+      if ((dailySalesData[dayIndex] as any)[tx.outletId] !== undefined) { (dailySalesData[dayIndex] as any)[tx.outletId] += tx.total; }
+      (dailySalesData[dayIndex] as any).total += tx.total;
+    } else {
+      (dailySalesData[dayIndex] as any).sales += tx.total;
+      (dailySalesData[dayIndex] as any).total += tx.total;
     }
+  });
+
+  const outletColors = ['#0d9488', '#0ea5e9', '#f59e0b', '#8b5cf6', '#ec4899'];
+
+  const getOutletDisplayName = () => {
+    if (isAdmin) { if (selectedOutlet === 'all') return 'Semua Outlet'; return outlets.find(o => o.id === selectedOutlet)?.name || ''; }
     return user?.outletName || '';
   };
 
+  if (isLoading) {
+    return (<div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>);
+  }
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">
-            {isAdmin ? 'Ringkasan konsolidasi semua outlet' : user?.outletName || 'Outlet'}
-          </p>
+          <p className="text-sm text-muted-foreground">{isAdmin ? 'Ringkasan konsolidasi semua outlet' : user?.outletName || 'Outlet'}</p>
         </div>
-        {!isAdmin && (
-          <Button size="sm" onClick={() => navigate('/pos')}>
-            <ShoppingCart className="h-4 w-4 mr-2" />
-            Buka Penjualan
-          </Button>
-        )}
+        {!isAdmin && (<Button size="sm" onClick={() => navigate('/pos')}><ShoppingCart className="h-4 w-4 mr-2" />Buka Penjualan</Button>)}
       </div>
 
-      {/* Admin Filters */}
       {isAdmin && (
         <div className="stat-card">
           <h3 className="font-medium text-foreground mb-4">Filter Data</h3>
@@ -166,145 +125,69 @@ export default function DashboardPage() {
             <div className="space-y-2">
               <Label>Outlet</Label>
               <Select value={selectedOutlet} onValueChange={setSelectedOutlet}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih Outlet" />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Pilih Outlet" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Semua Outlet</SelectItem>
-                  {outlets.map((outlet) => (
-                    <SelectItem key={outlet.id} value={outlet.id}>
-                      {outlet.name} - {outlet.branchNumber}
-                    </SelectItem>
-                  ))}
+                  {outlets.map((outlet) => (<SelectItem key={outlet.id} value={outlet.id}>{outlet.name} - {outlet.branchNumber}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Tanggal Mulai</Label>
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Tanggal Akhir</Label>
-              <Input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-            </div>
+            <div className="space-y-2"><Label>Tanggal Mulai</Label><Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
+            <div className="space-y-2"><Label>Tanggal Akhir</Label><Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></div>
           </div>
         </div>
       )}
 
-      {/* Current view indicator */}
-      <div className="text-sm text-muted-foreground">
-        Menampilkan data: <span className="font-medium text-foreground">{getOutletDisplayName()}</span>
-      </div>
+      <div className="text-sm text-muted-foreground">Menampilkan data: <span className="font-medium text-foreground">{getOutletDisplayName()}</span></div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Total Omzet"
-          value={formatCurrency(totalRevenue)}
-          icon={TrendingUp}
-          variant="primary"
-        />
-        <StatCard
-          title="Total Transaksi"
-          value={totalTransactions.toString()}
-          icon={Receipt}
-        />
-        <StatCard
-          title="Produk Terjual"
-          value={productsSold.toString()}
-          icon={ShoppingBag}
-        />
-        <StatCard
-          title="Kas Hari Ini"
-          value={formatCurrency(dailyCash)}
-          icon={Wallet}
-        />
+        <StatCard title="Total Omzet" value={formatCurrency(totalRevenue)} icon={TrendingUp} variant="primary" />
+        <StatCard title="Total Transaksi" value={totalTransactions.toString()} icon={Receipt} />
+        <StatCard title="Produk Terjual" value={productsSold.toString()} icon={ShoppingBag} />
+        <StatCard title="Kas Hari Ini" value={formatCurrency(dailyCash)} icon={Wallet} />
       </div>
 
-      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Sales chart */}
         <div className="stat-card">
           <h3 className="font-medium text-foreground mb-4">Penjualan Mingguan</h3>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={dailySalesData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis
-                  dataKey="day"
-                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
-                />
-                <YAxis
-                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
-                  tickFormatter={(value) => `${value / 1000}K`}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                  }}
-                  formatter={(value: number) => [formatCurrency(value), 'Penjualan']}
-                />
-                <Bar
-                  dataKey="sales"
-                  fill="hsl(var(--primary))"
-                  radius={[4, 4, 0, 0]}
-                />
+                <XAxis dataKey="day" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
+                <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} tickFormatter={(value) => `${value / 1000}K`} />
+                <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '6px', fontSize: '12px' }}
+                  formatter={(value: number, name: string) => {
+                    const outletName = isAdmin && selectedOutlet === 'all' ? outlets.find(o => o.id === name)?.name || name : 'Penjualan';
+                    return [formatCurrency(value), outletName];
+                  }} />
+                {isAdmin && selectedOutlet === 'all' && <Legend />}
+                {isAdmin && selectedOutlet === 'all' ? (
+                  outlets.map((outlet, index) => (<Bar key={outlet.id} dataKey={outlet.id} name={outlet.name} fill={outletColors[index % outletColors.length]} radius={[4, 4, 0, 0]} />))
+                ) : (<Bar dataKey="sales" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />)}
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Category chart */}
         <div className="stat-card">
-          <h3 className="font-medium text-foreground mb-4">Penjualan per Kategori</h3>
+          <h3 className="font-medium text-foreground mb-4">Penjualan per Produk</h3>
           <div className="h-56 flex items-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie
-                  data={categoryData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={70}
-                  paddingAngle={2}
-                  dataKey="value"
-                >
-                  {categoryData.map((entry, index) => (
-                    <Cell key={index} fill={entry.color} />
-                  ))}
+                <Pie data={productData} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={2} dataKey="value">
+                  {productData.map((entry, index) => (<Cell key={index} fill={entry.color} />))}
                 </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                  }}
-                />
+                <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '6px', fontSize: '12px' }}
+                  formatter={(value: number) => [formatCurrency(value), 'Omzet']} />
               </PieChart>
             </ResponsiveContainer>
             <div className="space-y-2 pr-4">
-              {categoryData.map((item) => (
+              {productData.map((item) => (
                 <div key={item.name} className="flex items-center gap-2 text-xs">
-                  <div
-                    className="h-2.5 w-2.5 rounded-full"
-                    style={{ backgroundColor: item.color }}
-                  />
+                  <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
                   <span className="text-muted-foreground">{item.name}</span>
-                  <span className="font-medium">
-                    {totalCategorySales > 0 ? Math.round((item.value / totalCategorySales) * 100) : 0}%
-                  </span>
+                  <span className="font-medium">{totalProductSales > 0 ? Math.round((item.value / totalProductSales) * 100) : 0}%</span>
                 </div>
               ))}
             </div>
@@ -312,82 +195,49 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Monthly summary & stats */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="stat-card">
           <h3 className="font-medium text-foreground mb-4">Kas Bulan Ini</h3>
           <p className="text-2xl font-bold text-primary">{formatCurrency(monthlyCash)}</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Periode: {currentMonth.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
-          </p>
+          <p className="text-xs text-muted-foreground mt-1">Periode: {currentMonth.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}</p>
         </div>
-
         <div className="stat-card">
           <h3 className="font-medium text-foreground mb-4">Ringkasan</h3>
           <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Total Outlet</span>
-              <span className="font-medium">{isAdmin ? outlets.length : 1}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Total Produk</span>
-              <span className="font-medium">{products.length}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Rata-rata Transaksi</span>
-              <span className="font-medium">
-                {totalTransactions > 0 ? formatCurrency(totalRevenue / totalTransactions) : formatCurrency(0)}
-              </span>
-            </div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Total Outlet</span><span className="font-medium">{isAdmin ? outlets.length : 1}</span></div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Total Produk</span><span className="font-medium">{products.length}</span></div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Rata-rata Transaksi</span><span className="font-medium">{totalTransactions > 0 ? formatCurrency(totalRevenue / totalTransactions) : formatCurrency(0)}</span></div>
           </div>
         </div>
       </div>
 
-      {/* Recent transactions */}
       <div className="stat-card">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-medium text-foreground">Transaksi Terbaru</h3>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/transactions')}>
-            Lihat Semua
-            <ArrowRight className="h-4 w-4 ml-1" />
-          </Button>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/transactions')}>Lihat Semua<ArrowRight className="h-4 w-4 ml-1" /></Button>
         </div>
         {filteredTransactions.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">Belum ada transaksi</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground">ID</th>
-                  {isAdmin && (
-                    <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground">Outlet</th>
-                  )}
-                  <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground">Item</th>
-                  <th className="text-right py-2 px-2 text-xs font-medium text-muted-foreground">Total</th>
-                  <th className="text-right py-2 px-2 text-xs font-medium text-muted-foreground">Tanggal</th>
-                </tr>
-              </thead>
+              <thead><tr className="border-b border-border">
+                <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground">ID</th>
+                {isAdmin && <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground">Outlet</th>}
+                <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground">Item</th>
+                <th className="text-right py-2 px-2 text-xs font-medium text-muted-foreground">Total</th>
+                <th className="text-right py-2 px-2 text-xs font-medium text-muted-foreground">Tanggal</th>
+              </tr></thead>
               <tbody>
                 {filteredTransactions.slice(0, 5).map((tx) => {
                   const outlet = outlets.find((o) => o.id === tx.outletId);
                   return (
                     <tr key={tx.id} className="border-b border-border/50">
-                      <td className="py-2 px-2 text-xs font-mono">{tx.id}</td>
-                      {isAdmin && (
-                        <td className="py-2 px-2 text-xs">
-                          {outlet?.name} - {outlet?.branchNumber}
-                        </td>
-                      )}
-                      <td className="py-2 px-2 text-xs">
-                        {tx.items.reduce((sum, item) => sum + item.quantity, 0)} item
-                      </td>
-                      <td className="py-2 px-2 text-xs text-right font-medium">
-                        {formatCurrency(tx.total)}
-                      </td>
-                      <td className="py-2 px-2 text-xs text-right text-muted-foreground">
-                        {formatDate(tx.createdAt)}
-                      </td>
+                      <td className="py-2 px-2 text-xs font-mono">{tx.transactionNumber}</td>
+                      {isAdmin && <td className="py-2 px-2 text-xs">{outlet?.name} - {outlet?.branchNumber}</td>}
+                      <td className="py-2 px-2 text-xs">{tx.items.reduce((sum, item) => sum + item.quantity, 0)} item</td>
+                      <td className="py-2 px-2 text-xs text-right font-medium">{formatCurrency(tx.total)}</td>
+                      <td className="py-2 px-2 text-xs text-right text-muted-foreground">{formatDate(tx.createdAt)}</td>
                     </tr>
                   );
                 })}
