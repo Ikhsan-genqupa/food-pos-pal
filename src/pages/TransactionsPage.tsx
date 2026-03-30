@@ -41,7 +41,116 @@ export default function TransactionsPage() {
   });
 
   const handlePrint = () => {
-    window.print();
+    if (!selectedTransaction) return;
+
+    const outlet = outlets.find((o) => o.id === selectedTransaction.outletId);
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const paymentLabel = getPaymentLabel(selectedTransaction.paymentMethod);
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Struk - ${selectedTransaction.transactionNumber}</title>
+        <style>
+          @page { 
+            size: 58mm auto; 
+            margin: 0; 
+          }
+          body { 
+            width: 58mm; 
+            margin: 0 auto; 
+            padding: 5mm; 
+            font-family: 'Courier New', Courier, monospace; 
+            font-size: 12px; 
+            color: #000;
+            line-height: 1.2;
+          }
+          .text-center { text-align: center; }
+          .text-right { text-align: right; }
+          .font-bold { font-weight: bold; }
+          .mb-1 { margin-bottom: 2px; }
+          .mb-2 { margin-bottom: 5px; }
+          .mb-4 { margin-bottom: 10px; }
+          .border-t { border-top: 1px dashed #000; padding-top: 5px; margin-top: 5px; }
+          .flex { display: flex; justify-content: space-between; }
+          .logo { height: 35px; width: auto; display: block; margin: 0 auto 5px; }
+          .item-row { margin-bottom: 2px; }
+        </style>
+      </head>
+      <body>
+        <div class="text-center mb-4">
+          <img src="${logo}" class="logo" />
+          <div class="font-bold">GenQuPa POS</div>
+          <div>${outlet?.name || ''}</div>
+          <div>${outlet?.address || ''}</div>
+          <div style="font-size: 10px; margin-top: 2px;">
+            ${formatDate(selectedTransaction.createdAt)}<br>
+            #${selectedTransaction.transactionNumber}
+          </div>
+        </div>
+
+        <div class="border-t">
+          ${selectedTransaction.items.map(item => `
+            <div class="item-row">
+              <div>${item.productName}</div>
+              <div class="flex">
+                <span>${item.quantity} x ${formatCurrency(item.price)}</span>
+                <span>${formatCurrency(item.total)}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="border-t">
+          <div class="flex">
+            <span>SUBTOTAL</span>
+            <span>${formatCurrency(selectedTransaction.subtotal)}</span>
+          </div>
+          <div class="flex font-bold" style="font-size: 14px; margin-top: 5px;">
+            <span>TOTAL</span>
+            <span>${formatCurrency(selectedTransaction.total)}</span>
+          </div>
+        </div>
+
+        <div class="border-t">
+          <div class="flex">
+            <span>METODE:</span>
+            <span>${paymentLabel}</span>
+          </div>
+          ${selectedTransaction.paymentMethod === 'tunai' ? `
+            <div class="flex">
+              <span>TUNAI:</span>
+              <span>${formatCurrency(selectedTransaction.cashReceived || 0)}</span>
+            </div>
+            <div class="flex font-bold">
+              <span>KEMBALI:</span>
+              <span>${formatCurrency(selectedTransaction.change || 0)}</span>
+            </div>
+          ` : ''}
+        </div>
+
+        <div class="text-center border-t" style="margin-top: 10px; padding-top: 10px; font-size: 10px;">
+          Terima kasih atas kunjungan Anda.<br>
+          Silakan datang kembali!
+        </div>
+
+        <script>
+          window.onload = () => {
+            window.print();
+            window.afterprint = () => window.close();
+            // Fallback for browsers that don't support afterprint
+            setTimeout(() => window.close(), 500);
+          };
+        </script>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
   };
 
   const getPaymentLabel = (method: string | undefined | null) => {

@@ -194,11 +194,14 @@ export default function ReportsPage() {
       return `${start.getDate()} ${monthNames[start.getMonth()]} ${start.getFullYear()} - ${end.getDate()} ${monthNames[end.getMonth()]} ${end.getFullYear()}`;
     };
 
+    const periodeTitle = formatPeriodeIndo(startDate, endDate);
+    const documentTitle = `Laporan Penjualan - ${outletInfo} - ${periodeTitle}`;
+
     const htmlContent = `
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Laporan Penjualan - ${outletInfo}</title>
+        <title>${documentTitle}</title>
         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
         <style>
           @page { size: auto; margin: 10mm; }
@@ -291,7 +294,7 @@ export default function ReportsPage() {
           <h1>GenQuPa POS</h1>
           <p class="report-title">Laporan Penjualan</p>
           <p class="outlet-name">${outletInfo}</p>
-          <p class="periode">Periode: ${formatPeriodeIndo(startDate, endDate)}</p>
+          <p class="periode">Periode: ${periodeTitle}</p>
         </div>
 
         <div class="summary-container">
@@ -382,6 +385,7 @@ export default function ReportsPage() {
     `;
 
     printWindow.document.write(htmlContent);
+    printWindow.document.title = documentTitle;
     printWindow.document.close();
     printWindow.print();
   };
