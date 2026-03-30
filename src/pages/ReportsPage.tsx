@@ -152,10 +152,28 @@ export default function ReportsPage() {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    const formatDateIndo = (dateStr: string) => {
-      if (!dateStr) return 'Semua';
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    const formatPeriodeIndo = (startStr: string, endStr: string) => {
+      if (!startStr || !endStr) return 'Semua';
+      const start = new Date(startStr);
+      const end = new Date(endStr);
+      
+      const monthNames = [
+        "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+      ];
+      
+      const isSameDate = startStr === endStr;
+      const isSameMonth = start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear();
+      
+      if (isSameDate) {
+        return `${start.getDate()} ${monthNames[start.getMonth()]} ${start.getFullYear()}`;
+      }
+      
+      if (isSameMonth) {
+        return `${start.getDate()} - ${end.getDate()} ${monthNames[start.getMonth()]} ${start.getFullYear()}`;
+      }
+      
+      return `${start.getDate()} ${monthNames[start.getMonth()]} ${start.getFullYear()} - ${end.getDate()} ${monthNames[end.getMonth()]} ${end.getFullYear()}`;
     };
 
     const htmlContent = `
@@ -165,50 +183,51 @@ export default function ReportsPage() {
         <title>Laporan Penjualan - ${outletInfo}</title>
         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
         <style>
+          @page { size: auto; margin: 10mm; }
           body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
-            padding: 20px 40px; 
+            padding: 20px 30px; 
             padding-bottom: 80px; 
             color: #1a1a1a;
             background-color: white;
-            line-height: 1.5;
+            line-height: 1.4;
           }
-          .header { text-align: center; margin-bottom: 30px; margin-top: 0; }
-          .header h1 { margin: 0; font-size: 32px; font-weight: 800; color: #000; letter-spacing: -1px; }
-          .header .report-title { margin: 5px 0 2px; font-size: 18px; font-weight: 600; color: #4b5563; text-transform: uppercase; letter-spacing: 1px; }
-          .header .outlet-name { margin: 0; font-size: 16px; color: #6b7280; }
-          .header .periode { margin: 2px 0 0; font-size: 13px; color: #9ca3af; }
+          .header { text-align: center; margin-bottom: 25px; margin-top: 0; }
+          .header h1 { margin: 0; font-size: 28px; font-weight: 800; color: #000; letter-spacing: -1px; }
+          .header .report-title { margin: 5px 0 2px; font-size: 16px; font-weight: 600; color: #4b5563; text-transform: uppercase; letter-spacing: 1px; }
+          .header .outlet-name { margin: 0; font-size: 14px; color: #6b7280; }
+          .header .periode { margin: 2px 0 0; font-size: 11px; color: #9ca3af; }
           
           .summary-container {
             background-color: #f9fafb;
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 35px;
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 25px;
             display: flex;
             justify-content: space-between;
             border: 1px solid #f3f4f6;
           }
           .summary-item { text-align: center; flex: 1; }
           .summary-item:not(:last-child) { border-right: 1px solid #e5e7eb; }
-          .summary-item .value { font-size: 22px; font-weight: 700; color: #0d9488; margin-bottom: 4px; }
-          .summary-item .label { font-size: 10px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
+          .summary-item .value { font-size: 18px; font-weight: 700; color: #0d9488; margin-bottom: 2px; }
+          .summary-item .label { font-size: 8px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
           
-          table { width: 100%; border-collapse: collapse; margin-top: 10px; border-radius: 12px; overflow: hidden; border-style: hidden; box-shadow: 0 0 0 1px #f3f4f6; table-layout: auto; }
+          table { width: 100%; border-collapse: collapse; margin-top: 5px; border-radius: 8px; overflow: hidden; border-style: hidden; box-shadow: 0 0 0 1px #f3f4f6; table-layout: auto; }
           th { 
             background-color: #0d9488; 
             color: white; 
             text-align: left; 
-            padding: 12px 14px; 
-            font-size: 10px; 
+            padding: 6px 8px; 
+            font-size: 7px; 
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
             white-space: nowrap;
           }
           td { 
-            padding: 12px 14px; 
+            padding: 6px 8px; 
             border-bottom: 1px solid #f3f4f6; 
-            font-size: 10px; 
+            font-size: 7px; 
             color: #374151;
             white-space: nowrap;
           }
@@ -217,23 +236,25 @@ export default function ReportsPage() {
           
           .footer { 
             position: fixed;
-            bottom: 20px;
-            left: 40px;
-            right: 40px;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
             text-align: center; 
-            font-size: 10px; 
+            font-size: 9px; 
             color: #9ca3af; 
-            border-top: 1px solid #f3f4f6;
-            padding-top: 15px;
-            letter-spacing: 0.5px;
             background: white;
+            padding: 10px 30px;
+            border-top: 1px solid #f3f4f6;
+            z-index: 100;
           }
-          .footer p { margin: 5px 0; }
+          .footer p { margin: 4px 0; }
           
           @media print {
             body { padding-top: 0; }
             .summary-container { -webkit-print-color-adjust: exact; background-color: #f9fafb !important; }
             th { -webkit-print-color-adjust: exact; background-color: #0d9488 !important; color: white !important; }
+            .footer { position: fixed; bottom: 0; }
           }
         </style>
       </head>
@@ -242,7 +263,7 @@ export default function ReportsPage() {
           <h1>GenQuPa POS</h1>
           <p class="report-title">Laporan Penjualan</p>
           <p class="outlet-name">${outletInfo}</p>
-          <p class="periode">Periode: ${formatDateIndo(startDate)} - ${formatDateIndo(endDate)}</p>
+          <p class="periode">Periode: ${formatPeriodeIndo(startDate, endDate)}</p>
         </div>
 
         <div class="summary-container">
@@ -264,6 +285,8 @@ export default function ReportsPage() {
           <thead>
             <tr>
               <th>Tanggal</th>
+              <th>ID Transaksi</th>
+              <th>Outlet</th>
               <th>Metode</th>
               <th>Produk</th>
               <th style="text-align: center;">Jml</th>
@@ -275,14 +298,22 @@ export default function ReportsPage() {
             ${exportData.map(row => `
               <tr>
                 <td>${row.Tanggal}</td>
+                <td style="font-family: monospace;">${row['ID Transaksi']}</td>
+                <td>${row.Outlet}</td>
                 <td style="font-weight: 600;">${row.Metode}</td>
                 <td style="color: #4b5563;">${row.Produk}</td>
                 <td style="text-align: center;">${row.Jumlah}</td>
-                <td style="text-align: right;">Rp ${row.Harga.toLocaleString('id-ID')}</td>
-                <td style="text-align: right; font-weight: 700; color: #0d9488;">Rp ${row.Total.toLocaleString('id-ID')}</td>
+                <td style="text-align: right;">Rp${row.Harga.toLocaleString('id-ID')}</td>
+                <td style="text-align: right; font-weight: 700; color: #0d9488;">Rp${row.Total.toLocaleString('id-ID')}</td>
               </tr>
             `).join('')}
           </tbody>
+          <tfoot style="background-color: #f9fafb;">
+            <tr>
+              <td colspan="7" style="text-align: right; padding: 10px 8px; font-weight: 700; font-size: 8px; text-transform: uppercase;">Total Terhitung</td>
+              <td style="text-align: right; padding: 10px 8px; font-weight: 800; font-size: 9px; color: #0d9488; border-top: 2px solid #0d9488;">Rp${totalRevenue.toLocaleString('id-ID')}</td>
+            </tr>
+          </tfoot>
         </table>
 
         <div class="footer">
