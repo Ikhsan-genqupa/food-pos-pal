@@ -130,6 +130,12 @@ export default function ReportsPage() {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
+    const formatDateIndo = (dateStr: string) => {
+      if (!dateStr) return 'Semua';
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    };
+
     const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -139,17 +145,17 @@ export default function ReportsPage() {
         <style>
           body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
-            padding: 40px; 
-            padding-bottom: 100px; /* Space for fixed footer */
+            padding: 20px 40px; 
+            padding-bottom: 80px; /* Space for fixed footer */
             color: #1a1a1a;
             background-color: white;
             line-height: 1.5;
           }
-          .header { text-align: center; margin-bottom: 40px; }
+          .header { text-align: center; margin-bottom: 30px; margin-top: 0; }
           .header h1 { margin: 0; font-size: 32px; font-weight: 800; color: #000; letter-spacing: -1px; }
-          .header .report-title { margin: 10px 0 5px; font-size: 18px; font-weight: 600; color: #4b5563; text-transform: uppercase; letter-spacing: 1px; }
+          .header .report-title { margin: 5px 0 2px; font-size: 18px; font-weight: 600; color: #4b5563; text-transform: uppercase; letter-spacing: 1px; }
           .header .outlet-name { margin: 0; font-size: 16px; color: #6b7280; }
-          .header .periode { margin: 5px 0 0; font-size: 13px; color: #9ca3af; }
+          .header .periode { margin: 2px 0 0; font-size: 13px; color: #9ca3af; }
           
           .summary-container {
             background-color: #f9fafb;
@@ -189,21 +195,21 @@ export default function ReportsPage() {
           
           .footer { 
             position: fixed;
-            bottom: 40px;
+            bottom: 20px;
             left: 40px;
             right: 40px;
             text-align: center; 
             font-size: 10px; 
             color: #9ca3af; 
             border-top: 1px solid #f3f4f6;
-            padding-top: 20px;
+            padding-top: 15px;
             letter-spacing: 0.5px;
             background: white;
           }
           .footer p { margin: 5px 0; }
           
           @media print {
-            body { padding: 0; }
+            body { padding-top: 0; }
             .summary-container { -webkit-print-color-adjust: exact; background-color: #f9fafb !important; }
             th { -webkit-print-color-adjust: exact; background-color: #0d9488 !important; color: white !important; }
           }
@@ -214,7 +220,7 @@ export default function ReportsPage() {
           <h1>GenQuPa POS</h1>
           <p class="report-title">Laporan Penjualan</p>
           <p class="outlet-name">${outletInfo}</p>
-          <p class="periode">Periode: ${startDate || 'Semua'} - ${endDate || 'Semua'}</p>
+          <p class="periode">Periode: ${formatDateIndo(startDate)} - ${formatDateIndo(endDate)}</p>
         </div>
 
         <div class="summary-container">

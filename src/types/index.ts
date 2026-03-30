@@ -51,6 +51,8 @@ export interface CartItem {
   quantity: number;
 }
 
+export type PaymentMethod = 'tunai' | 'qris' | 'ovo' | 'gopay' | 'dana' | 'debit' | 'kredit';
+
 export interface Transaction {
   id: string;
   transactionNumber: string;
@@ -59,7 +61,7 @@ export interface Transaction {
   items: TransactionItem[];
   subtotal: number;
   total: number;
-  paymentMethod: 'cash';
+  paymentMethod: PaymentMethod;
   cashReceived: number;
   change: number;
   cashierName?: string;
