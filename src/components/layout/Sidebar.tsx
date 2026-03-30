@@ -36,18 +36,14 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
 
   const outletLinks = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/pos', icon: ShoppingCart, label: 'Penjualan' },
-    { to: '/products', icon: Package, label: 'Produk' },
     { to: '/stock', icon: Package, label: 'Stok' },
-    { to: '/transactions', icon: History, label: 'Transaksi' },
   ];
 
   const cashierLinks = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/pos', icon: ShoppingCart, label: 'Penjualan' },
-    { to: '/products', icon: Package, label: 'Produk' },
-    { to: '/stock', icon: Package, label: 'Stok' },
     { to: '/transactions', icon: History, label: 'Transaksi' },
+    { to: '/reports', icon: BarChart3, label: 'Laporan' },
   ];
 
   const getLinks = () => {

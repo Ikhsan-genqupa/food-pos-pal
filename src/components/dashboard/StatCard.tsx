@@ -10,8 +10,9 @@ interface StatCardProps {
     value: number;
     isPositive: boolean;
   };
-  variant?: 'default' | 'primary';
+  variant?: 'default' | 'primary' | 'warning';
   className?: string;
+  onClick?: () => void;
 }
 
 export default function StatCard({
@@ -21,12 +22,17 @@ export default function StatCard({
   trend,
   variant = 'default',
   className,
+  onClick,
 }: StatCardProps) {
   return (
     <div
+      onClick={onClick}
       className={cn(
-        'animate-fade-in',
-        variant === 'primary' ? 'stat-card-primary' : 'stat-card',
+        'animate-fade-in transition-all',
+        onClick && 'cursor-pointer hover:scale-[1.02] active:scale-[0.98]',
+        variant === 'primary' ? 'stat-card-primary' : 
+        variant === 'warning' ? 'bg-amber-50 border border-amber-200' : 
+        'stat-card',
         className
       )}
     >
@@ -37,6 +43,8 @@ export default function StatCard({
               'text-sm font-medium',
               variant === 'primary'
                 ? 'text-primary-foreground/80'
+                : variant === 'warning'
+                ? 'text-amber-700'
                 : 'text-muted-foreground'
             )}
           >
@@ -45,7 +53,11 @@ export default function StatCard({
           <p
             className={cn(
               'text-2xl font-bold mt-1',
-              variant === 'primary' ? 'text-primary-foreground' : 'text-foreground'
+              variant === 'primary' 
+                ? 'text-primary-foreground' 
+                : variant === 'warning'
+                ? 'text-amber-900'
+                : 'text-foreground'
             )}
           >
             {value}
@@ -66,13 +78,19 @@ export default function StatCard({
             'p-3 rounded-xl',
             variant === 'primary'
               ? 'bg-primary-foreground/20'
+              : variant === 'warning'
+              ? 'bg-amber-200/50'
               : 'bg-primary/10'
           )}
         >
           <Icon
             className={cn(
               'h-6 w-6',
-              variant === 'primary' ? 'text-primary-foreground' : 'text-primary'
+              variant === 'primary' 
+                ? 'text-primary-foreground' 
+                : variant === 'warning'
+                ? 'text-amber-700'
+                : 'text-primary'
             )}
           />
         </div>

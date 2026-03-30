@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useOutlets } from '@/hooks/useOutlets';
 import { useActiveProducts } from '@/hooks/useProducts';
+import { useStocks } from '@/hooks/useStocks';
 import { useCategories } from '@/hooks/useCategories';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import StatCard from '@/components/dashboard/StatCard';
@@ -54,6 +55,7 @@ export default function DashboardPage() {
 
   // Fetch real data
   const { data: transactions = [], isLoading: txLoading } = useTransactions(selectedOutlet);
+  const { data: stocks = [] } = useStocks(selectedOutlet);
   const { data: outlets = [] } = useOutlets();
   const { data: products = [] } = useActiveProducts();
   const { data: categories = [] } = useCategories();
@@ -102,6 +104,8 @@ export default function DashboardPage() {
   const productsSold = filteredTransactions.reduce((sum, tx) => 
     sum + tx.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0
   );
+
+  const lowStockCount = stocks.filter(s => s.quantity < 10 && (s.product?.isBundle !== true)).length;
 
   const productColors = [
     '#0d9488', // Teal
@@ -256,7 +260,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         <StatCard
           title="Total Omzet"
           value={formatCurrency(totalRevenue)}
@@ -272,6 +276,13 @@ export default function DashboardPage() {
           title="Produk Terjual"
           value={productsSold.toString()}
           icon={ShoppingBag}
+        />
+        <StatCard
+          title="Stok Menipis"
+          value={lowStockCount.toString()}
+          icon={Package}
+          variant={lowStockCount > 0 ? 'warning' : 'default'}
+          onClick={() => navigate('/stock')}
         />
         <StatCard
           title="Kas Hari Ini"
