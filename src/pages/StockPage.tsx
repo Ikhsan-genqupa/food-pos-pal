@@ -67,7 +67,7 @@ export default function StockPage() {
   const filteredStocks = getFilteredStocks();
   const lowStockCount = filteredStocks.filter((s) => s.quantity < 10).length;
 
-  const canEditStock = isAdmin || user?.role === 'outlet';
+  const canEditStock = isAdmin;
 
   const handleUpdateStock = () => {
     if (!editStock || !canEditStock) return;

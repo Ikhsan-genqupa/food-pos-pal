@@ -40,7 +40,6 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
     { to: '/products', icon: Package, label: 'Produk' },
     { to: '/stock', icon: Package, label: 'Stok' },
     { to: '/transactions', icon: History, label: 'Transaksi' },
-    { to: '/reports', icon: BarChart3, label: 'Laporan' },
   ];
 
   const cashierLinks = [
