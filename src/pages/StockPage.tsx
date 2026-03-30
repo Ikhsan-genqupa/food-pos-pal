@@ -65,8 +65,10 @@ export default function StockPage() {
   const filteredStocks = getFilteredStocks();
   const lowStockCount = filteredStocks.filter((s) => s.quantity < 10).length;
 
+  const canEditStock = isAdmin || user?.role === 'outlet';
+
   const handleUpdateStock = () => {
-    if (!editStock) return;
+    if (!editStock || !canEditStock) return;
     
     const qty = parseInt(newQuantity);
     if (isNaN(qty) || qty < 0) {
@@ -87,6 +89,11 @@ export default function StockPage() {
   };
 
   const openEditDialog = (productId: string, outletId: string, currentQty: number) => {
+    if (!canEditStock) {
+      toast({ title: 'Gagal', description: 'Anda tidak memiliki akses untuk mengubah stok', variant: 'destructive' });
+      return;
+    }
+    
     // Only allow editing own outlet stock for non-admin
     if (!isAdmin && outletId !== user?.outletId) {
       toast({ title: 'Gagal', description: 'Anda hanya dapat mengedit stok outlet Anda', variant: 'destructive' });
@@ -195,7 +202,9 @@ export default function StockPage() {
                 <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground">Harga</th>
                 <th className="text-center py-2.5 px-4 text-xs font-medium text-muted-foreground">Stok</th>
                 <th className="text-center py-2.5 px-4 text-xs font-medium text-muted-foreground">Status</th>
-                <th className="text-right py-2.5 px-4 text-xs font-medium text-muted-foreground">Aksi</th>
+                {canEditStock && (
+                  <th className="text-right py-2.5 px-4 text-xs font-medium text-muted-foreground">Aksi</th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -245,17 +254,19 @@ export default function StockPage() {
                         </span>
                       )}
                     </td>
-                    <td className="py-2.5 px-4 text-right">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-7 text-xs"
-                        onClick={() => openEditDialog(stock.productId, stock.outletId, stock.quantity)}
-                      >
-                        <Edit className="h-3 w-3 mr-1" />
-                        Ubah
-                      </Button>
-                    </td>
+                    {canEditStock && (
+                      <td className="py-2.5 px-4 text-right">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-7 text-xs"
+                          onClick={() => openEditDialog(stock.productId, stock.outletId, stock.quantity)}
+                        >
+                          <Edit className="h-3 w-3 mr-1" />
+                          Ubah
+                        </Button>
+                      </td>
+                    )}
                   </tr>
                 );
               })}
