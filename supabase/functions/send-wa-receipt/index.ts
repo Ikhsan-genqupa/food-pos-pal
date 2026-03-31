@@ -52,7 +52,7 @@ ${Array.isArray(items) ? items.map((i: string) => `- ${i}`).join('\n') : '-'}
 💰 *Total Tagihan:* Rp${total?.toLocaleString('id-ID') || '0'}
 
 🕒 *Waktu Pengambilan:*
-${pickupTime ? new Date(pickupTime).toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' }) : '-'}
+${pickupTime ? new Date(pickupTime).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'full', timeStyle: 'short', hourCycle: 'h23' }) : '-'} WIB
 
 Silakan tunjukkan pesan ini saat mengambil pesanan di outlet pilihan Anda. 
 Terima kasih telah memesan di *GenQuPa Food Pal*! 🍔🍟

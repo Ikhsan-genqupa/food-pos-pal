@@ -209,8 +209,8 @@ export default function AdminOnlineOrders() {
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Phone className="h-3 w-3" /> {order.customerPhone}
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="h-3 w-3" /> Pickup: {order.pickupTime ? format(order.pickupTime, 'HH:mm (dd MMM)', { locale: id }) : '-'}
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground font-bold">
+                    <Clock className="h-4 w-4 text-primary" /> {order.pickupTime ? new Date(order.pickupTime).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short', year: 'numeric', hourCycle: 'h23' }) + ' WIB' : '-'}
                   </div>
                 </div>
               </CardContent>

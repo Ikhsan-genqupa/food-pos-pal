@@ -185,7 +185,7 @@ export default function OnlineOrders() {
               <CardContent className="pt-4 space-y-4 flex-1">
                 <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold bg-primary/5 p-2 rounded-md">
                   <Clock className="h-4 w-4 text-primary shrink-0" />
-                  Ambil: {order.pickupTime ? format(order.pickupTime, 'HH:mm (dd MMM)', { locale: id }) : '-'}
+                  Ambil: {order.pickupTime ? new Date(order.pickupTime).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short', hourCycle: 'h23' }) + ' WIB' : '-'}
                 </div>
 
                 <div className="space-y-2">
