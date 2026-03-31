@@ -98,7 +98,7 @@ export function useTransactions(outletId?: string) {
         customerPhone: t.customer_phone,
         pickupTime: t.pickup_time ? new Date(t.pickup_time) : undefined,
         status: (t.status as any) || 'completed',
-        orderSource: t.order_source as 'online' | 'offline',
+        orderSource: (t as any).order_source as 'online' | 'offline',
         paymentProofUrl: t.payment_proof_url,
         createdAt: new Date(t.created_at),
       }));
@@ -258,6 +258,114 @@ export function useUpdateTransactionStatus() {
     },
   });
 }
+
+export function useVerifyOnlineOrder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (order: any) => {
+      const outletId = order.outletId || order.outlet_id;
+      const outletName = order.outlet?.name || 'Outlet';
+      
+      // 1. Fetch Fresh Transaction Items (to be sure)
+      const { data: items, error: itemsError } = await supabase
+        .from('transaction_items')
+        .select('*')
+        .eq('transaction_id', order.id);
+        
+      if (itemsError) throw itemsError;
+      if (!items || items.length === 0) throw new Error('Pesanan tidak memiliki item.');
+
+      // 2. Prepare Map of Requirements (Aggregated for multiple of same product)
+      const requirements: Record<string, { name: string; quantity: number }> = {};
+      
+      for (const item of items) {
+        if (!item.product_id) continue;
+        
+        // Fetch product to check if it's a bundle
+        const { data: product } = await supabase
+          .from('products')
+          .select('id, name, is_bundle, bundle_items')
+          .eq('id', item.product_id)
+          .single();
+          
+        if (!product) continue;
+
+        if (product.is_bundle && Array.isArray(product.bundle_items)) {
+          const bundleItems = product.bundle_items as { productId: string; quantity: number }[];
+          for (const bi of bundleItems) {
+             // We need to fetch the component name for better error reporting if needed, 
+             // but for now, we sum the totals
+             requirements[bi.productId] = {
+               name: "", // We will fetch names if check fails
+               quantity: (requirements[bi.productId]?.quantity || 0) + (bi.quantity * item.quantity)
+             };
+          }
+        } else {
+          requirements[item.product_id] = {
+            name: product.name,
+            quantity: (requirements[item.product_id]?.quantity || 0) + item.quantity
+          };
+        }
+      }
+
+      // 3. VALIDATE STOCKS
+      for (const [productId, req] of Object.entries(requirements)) {
+        const { data: stock } = await supabase
+          .from('stocks')
+          .select('quantity, products(name)')
+          .eq('product_id', productId)
+          .eq('outlet_id', outletId)
+          .maybeSingle();
+          
+        const productName = req.name || (stock?.products as any)?.name || 'Produk';
+        const currentStock = stock?.quantity || 0;
+        
+        if (currentStock < req.quantity) {
+          throw new Error(`Gagal Verifikasi! Stok di ${outletName} tidak mencukupi untuk ${productName} (Butuh: ${req.quantity}, Ada: ${currentStock}).`);
+        }
+      }
+
+      // 4. ATOMIC REDUCTION (Sequential for now, but valid after pre-check)
+      for (const [productId, req] of Object.entries(requirements)) {
+        const { data: stock } = await supabase
+          .from('stocks')
+          .select('id, quantity')
+          .eq('product_id', productId)
+          .eq('outlet_id', outletId)
+          .single();
+          
+        await supabase
+          .from('stocks')
+          .update({ quantity: stock.quantity - req.quantity })
+          .eq('id', stock.id);
+      }
+
+      // 5. UPDATE STATUS
+      const { data: updated, error: statusError } = await supabase
+        .from('transactions')
+        .update({ status: 'verified' })
+        .eq('id', order.id)
+        .select()
+        .single();
+        
+      if (statusError) throw statusError;
+      
+      return updated;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['stocks'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Gagal Verifikasi",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+}
 export function useTransaction(id?: string) {
   return useQuery({
     queryKey: ['transaction', id],
@@ -320,7 +428,7 @@ export function useTransaction(id?: string) {
         customerPhone: data.customer_phone,
         pickupTime: data.pickup_time ? new Date(data.pickup_time) : undefined,
         status: (data.status as any) || 'completed',
-        orderSource: data.order_source as 'online' | 'offline',
+        orderSource: (data as any).order_source as 'online' | 'offline',
         paymentProofUrl: data.payment_proof_url,
         createdAt: new Date(data.created_at),
       };

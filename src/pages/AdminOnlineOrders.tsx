@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useTransactions, useUpdateTransactionStatus } from '@/hooks/useTransactions';
+import { useTransactions, useUpdateTransactionStatus, useVerifyOnlineOrder } from '@/hooks/useTransactions';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,6 +30,7 @@ export default function AdminOnlineOrders() {
   const { user } = useAuth();
   const { data: transactions = [], isLoading, refetch } = useTransactions('all');
   const updateStatus = useUpdateTransactionStatus();
+  const verifyOrder = useVerifyOnlineOrder();
   const { toast } = useToast();
   const [isVerifying, setIsVerifying] = useState<string | null>(null);
 
@@ -74,8 +75,8 @@ export default function AdminOnlineOrders() {
     try {
       setIsVerifying(order.id);
       
-      // Update status
-      await updateStatus.mutateAsync({ id: order.id, status: 'verified' });
+      // Tahap 1 & 2: Validate Stock and Update Status & Reduce Stock
+      await verifyOrder.mutateAsync(order);
 
       // Tahap 5: Send WA Notification via Edge Function
       const { error: waError } = await supabase.functions.invoke('send-wa-receipt', {
