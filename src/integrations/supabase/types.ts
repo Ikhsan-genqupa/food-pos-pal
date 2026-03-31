@@ -234,6 +234,11 @@ export type Database = {
           subtotal: number
           total: number
           transaction_number: string
+          order_type: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          pickup_time: string | null
+          status: string | null
         }
         Insert: {
           cash_received?: number
@@ -246,6 +251,11 @@ export type Database = {
           subtotal?: number
           total?: number
           transaction_number: string
+          order_type?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          pickup_time?: string | null
+          status?: string | null
         }
         Update: {
           cash_received?: number
@@ -258,6 +268,11 @@ export type Database = {
           subtotal?: number
           total?: number
           transaction_number?: string
+          order_type?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          pickup_time?: string | null
+          status?: string | null
         }
         Relationships: [
           {

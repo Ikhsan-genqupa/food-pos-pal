@@ -12,6 +12,11 @@ export interface CreateTransactionInput {
   cashReceived: number;
   change: number;
   cashierName?: string;
+  orderType?: 'dine-in' | 'takeaway' | 'bopis';
+  customerName?: string;
+  customerPhone?: string;
+  pickupTime?: Date;
+  status?: string;
 }
 
 export function useTransactions(outletId?: string) {
@@ -86,6 +91,11 @@ export function useTransactions(outletId?: string) {
         cashReceived: Number(t.cash_received),
         change: Number(t.change_amount),
         cashierName: t.cashier_name,
+        orderType: t.order_type as 'dine-in' | 'takeaway' | 'bopis',
+        customerName: t.customer_name,
+        customerPhone: t.customer_phone,
+        pickupTime: t.pickup_time ? new Date(t.pickup_time) : undefined,
+        status: (t.status as any) || 'completed',
         createdAt: new Date(t.created_at),
       }));
     },
@@ -112,6 +122,11 @@ export function useCreateTransaction() {
           cash_received: input.cashReceived,
           change_amount: input.change,
           cashier_name: input.cashierName,
+          order_type: input.orderType || 'dine-in',
+          customer_name: input.customerName,
+          customer_phone: input.customerPhone,
+          pickup_time: input.pickupTime?.toISOString(),
+          status: input.status || (input.orderType === 'bopis' ? 'pending' : 'completed'),
         })
         .select()
         .single();
@@ -194,6 +209,38 @@ export function useCreateTransaction() {
       toast({
         title: 'Berhasil',
         description: 'Transaksi berhasil disimpan',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+export function useUpdateTransactionStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { data, error } = await supabase
+        .from('transactions')
+        .update({ status })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      toast({
+        title: 'Berhasil',
+        description: 'Status pesanan berhasil diperbarui',
       });
     },
     onError: (error) => {

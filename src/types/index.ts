@@ -68,6 +68,11 @@ export interface Transaction {
   cashReceived: number;
   change: number;
   cashierName?: string;
+  orderType?: 'dine-in' | 'takeaway' | 'bopis';
+  customerName?: string;
+  customerPhone?: string;
+  pickupTime?: Date;
+  status: 'pending' | 'preparing' | 'ready_for_pickup' | 'completed' | 'cancelled';
   createdAt: Date;
 }
 

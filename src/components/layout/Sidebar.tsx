@@ -12,6 +12,7 @@ import {
   LogOut,
   X,
   Users,
+  ShoppingBag,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
 
   const adminLinks = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/online-orders', icon: ShoppingBag, label: 'Pesanan Online' },
     { to: '/outlets', icon: Store, label: 'Manajemen Outlet' },
     { to: '/users', icon: Users, label: 'Manajemen User' },
     { to: '/products', icon: Package, label: 'Produk' },
@@ -42,6 +44,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const cashierLinks = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/pos', icon: ShoppingCart, label: 'Penjualan' },
+    { to: '/online-orders', icon: ShoppingBag, label: 'Pesanan Online' },
     { to: '/transactions', icon: History, label: 'Transaksi' },
     { to: '/reports', icon: BarChart3, label: 'Laporan' },
   ];

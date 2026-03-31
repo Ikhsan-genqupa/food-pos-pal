@@ -15,6 +15,8 @@ import TransactionsPage from "@/pages/TransactionsPage";
 import OutletsPage from "@/pages/OutletsPage";
 import ReportsPage from "@/pages/ReportsPage";
 import UsersPage from "@/pages/UsersPage";
+import OnlineOrders from "@/pages/OnlineOrders";
+import OrderPage from "@/pages/OrderPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +31,8 @@ const App = () => (
             <Sonner />
             <Routes>
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/order" element={<OrderPage />} />
+              <Route path="/menu" element={<Navigate to="/order" replace />} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route element={<DashboardLayout />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
@@ -38,6 +42,7 @@ const App = () => (
                 <Route path="/transactions" element={<TransactionsPage />} />
                 <Route path="/outlets" element={<OutletsPage />} />
                 <Route path="/reports" element={<ReportsPage />} />
+                <Route path="/online-orders" element={<OnlineOrders />} />
                 <Route path="/users" element={<UsersPage />} />
               </Route>
               <Route path="*" element={<NotFound />} />
