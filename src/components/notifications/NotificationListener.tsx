@@ -2,13 +2,15 @@ import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
-import { ShoppingBag, Bell, BellOff } from 'lucide-react';
+import { ShoppingBag, Bell, BellOff, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Standard notification sound (Ting)
 const NOTIFICATION_SOUND_URL = 'https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3';
 
 export const NotificationListener: React.FC = () => {
+  const { user } = useAuth();
   const [isSoundEnabled, setIsSoundEnabled] = useState<boolean>(() => {
     const saved = localStorage.getItem('notification_sound_enabled');
     return saved === 'true';
@@ -32,10 +34,25 @@ export const NotificationListener: React.FC = () => {
         },
         (payload) => {
           const newOrder = payload.new;
-          
-          // Only notify for online orders
           if (newOrder.order_source === 'online') {
             handleNewOnlineOrder(newOrder);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'transactions',
+        },
+        (payload) => {
+          const oldOrder = payload.old;
+          const newOrder = payload.new;
+          
+          // If status changed to verified, and it was previously not verified
+          if (newOrder.status === 'verified' && oldOrder.status !== 'verified') {
+            handleOrderVerified(newOrder);
           }
         }
       )
@@ -66,6 +83,18 @@ export const NotificationListener: React.FC = () => {
         },
       },
     });
+  };
+
+  const handleOrderVerified = (order: any) => {
+    // Only show to Kasir and Admin
+    if (user?.role === 'admin' || user?.role === 'kasir') {
+      toast.success('Pesanan Siap Diproses!', {
+        description: `No. Transaksi: ${order.transaction_number} - Online`,
+        icon: <CheckCircle2 className="h-5 w-5 text-green-500" />,
+        className: "bg-green-50 border-green-200",
+        duration: 6000,
+      });
+    }
   };
 
   const toggleSound = () => {

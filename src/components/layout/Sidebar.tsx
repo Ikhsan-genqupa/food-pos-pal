@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import logo from '@/assets/logo.png';
 import {
   LayoutDashboard,
@@ -25,6 +26,7 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const { user, logout, isAdmin } = useAuth();
+  const { pendingVerificationCount } = useNotifications();
 
   const adminLinks = [
     { to: '/verify-payments', icon: ShieldCheck, label: 'Verifikasi Pembayaran' },
@@ -118,7 +120,12 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
                 onClick={() => window.innerWidth < 1024 && onToggle()}
               >
                 <link.icon className="h-4 w-4" />
-                <span>{link.label}</span>
+                <span className="flex-1">{link.label}</span>
+                {link.to === '/verify-payments' && pendingVerificationCount > 0 && (
+                  <span className="flex items-center justify-center bg-red-600 text-white text-[10px] font-bold h-5 min-w-5 px-1.5 rounded-full animate-pulse shadow-md shadow-red-200">
+                    {pendingVerificationCount}
+                  </span>
+                )}
               </NavLink>
             ))}
           </nav>
