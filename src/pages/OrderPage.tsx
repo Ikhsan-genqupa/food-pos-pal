@@ -370,7 +370,7 @@ export default function OrderPage() {
                     <UtensilsCrossed className="h-4 w-4 text-white" />
                   </div>
                   <p className="text-[10px] text-primary/70 font-bold leading-relaxed">
-                    Pembayaran dilakukan langsung di outlet secara <span className="underline">tunai atau nontunai</span> saat pengambilan pesanan.
+                    Pembayaran wajib dilakukan via transfer bank di halaman selanjutnya. Pesanan baru akan diproses oleh Kasir setelah bukti transfer diverifikasi oleh Admin.
                   </p>
                </div>
             </div>
