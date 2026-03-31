@@ -5,7 +5,9 @@ import { useAuth } from '@/contexts/AuthContext';
 interface NotificationContextType {
   pendingVerificationCount: number;
   lastNewOrder: any | null;
+  lastVerifiedOrder: any | null;
   setLastNewOrder: (order: any | null) => void;
+  setLastVerifiedOrder: (order: any | null) => void;
   refreshPendingCount: () => Promise<void>;
 }
 
@@ -15,6 +17,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   const { user } = useAuth();
   const [pendingVerificationCount, setPendingVerificationCount] = useState(0);
   const [lastNewOrder, setLastNewOrder] = useState<any | null>(null);
+  const [lastVerifiedOrder, setLastVerifiedOrder] = useState<any | null>(null);
 
   const fetchPendingCount = async () => {
     if (!user) return;
@@ -65,8 +68,22 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
             }
           }
 
-          // 2. Handle Status updates to update count and show "verified" alert
-          if (payload.eventType === 'UPDATE' || payload.eventType === 'DELETE') {
+          // 2. Handle Status updates (Verified)
+          if (payload.eventType === 'UPDATE') {
+            const oldOrder = payload.old;
+            const newOrder = payload.new;
+            
+            if (newOrder.status === 'verified' && oldOrder.status !== 'verified') {
+              if (user.role === 'admin' || user.role === 'kasir') {
+                if (user.role === 'admin' || user.outletId === newOrder.outlet_id) {
+                   setLastVerifiedOrder(newOrder);
+                }
+              }
+            }
+            fetchPendingCount();
+          }
+
+          if (payload.eventType === 'DELETE') {
             fetchPendingCount();
           }
         }
@@ -83,7 +100,9 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       value={{
         pendingVerificationCount,
         lastNewOrder,
+        lastVerifiedOrder,
         setLastNewOrder,
+        setLastVerifiedOrder,
         refreshPendingCount: fetchPendingCount,
       }}
     >

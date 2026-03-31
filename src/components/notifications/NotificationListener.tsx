@@ -64,6 +64,9 @@ export const NotificationListener: React.FC = () => {
   }, [isSoundEnabled]);
 
   const handleNewOnlineOrder = (order: any) => {
+    // Stage 1: Only for Admin
+    if (user?.role !== 'admin') return;
+
     // 1. Play sound
     if (isSoundEnabled && audioRef.current) {
       audioRef.current.play().catch(err => {
@@ -72,10 +75,11 @@ export const NotificationListener: React.FC = () => {
     }
 
     // 2. Show Toast
-    toast.success('Pesanan Online Baru!', {
-      description: `${order.customer_name || 'Pelanggan'} • ${formatCurrency(order.total)}`,
-      icon: <ShoppingBag className="h-5 w-5 text-blue-500" />,
+    toast.success('ADA PESANAN BARU!', {
+      description: `Perlu Verifikasi - ${order.customer_name || 'Pelanggan'} • ${formatCurrency(order.total)}`,
+      icon: <ShoppingBag className="h-5 w-5 text-orange-500" />,
       duration: 8000,
+      className: "bg-orange-50 border-orange-200",
       action: {
         label: 'Lihat Detail',
         onClick: () => {
@@ -86,13 +90,27 @@ export const NotificationListener: React.FC = () => {
   };
 
   const handleOrderVerified = (order: any) => {
-    // Only show to Kasir and Admin
+    // Stage 2: Action for Kasir, Confirmation for Admin
     if (user?.role === 'admin' || user?.role === 'kasir') {
-      toast.success('Pesanan Siap Diproses!', {
-        description: `No. Transaksi: ${order.transaction_number} - Online`,
+      
+      // Play sound ONLY for Kasir
+      if (user.role === 'kasir' && isSoundEnabled && audioRef.current) {
+        audioRef.current.play().catch(err => {
+          console.error('Audio playback failed:', err);
+        });
+      }
+
+      toast.success('PESANAN ONLINE MASUK!', {
+        description: `Pembayaran Terverifikasi, Silakan Diproses (TRX: ${order.transaction_number})`,
         icon: <CheckCircle2 className="h-5 w-5 text-green-500" />,
         className: "bg-green-50 border-green-200",
-        duration: 6000,
+        duration: 8000,
+        action: {
+          label: 'Detail Dapur',
+          onClick: () => {
+             window.location.href = '/online-orders';
+          }
+        }
       });
     }
   };
