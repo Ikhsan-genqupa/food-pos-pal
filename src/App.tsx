@@ -16,6 +16,7 @@ import OutletsPage from "@/pages/OutletsPage";
 import ReportsPage from "@/pages/ReportsPage";
 import UsersPage from "@/pages/UsersPage";
 import OnlineOrders from "@/pages/OnlineOrders";
+import AdminOnlineOrders from "@/pages/AdminOnlineOrders";
 import OrderPage from "@/pages/OrderPage";
 import NotFound from "./pages/NotFound";
 
@@ -43,6 +44,7 @@ const App = () => (
                 <Route path="/outlets" element={<OutletsPage />} />
                 <Route path="/reports" element={<ReportsPage />} />
                 <Route path="/online-orders" element={<OnlineOrders />} />
+                <Route path="/verify-payments" element={<AdminOnlineOrders />} />
                 <Route path="/users" element={<UsersPage />} />
               </Route>
               <Route path="*" element={<NotFound />} />

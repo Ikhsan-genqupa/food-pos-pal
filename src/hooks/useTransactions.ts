@@ -17,6 +17,7 @@ export interface CreateTransactionInput {
   customerPhone?: string;
   pickupTime?: Date;
   status?: string;
+  paymentProofUrl?: string;
 }
 
 export function useTransactions(outletId?: string) {
@@ -96,6 +97,7 @@ export function useTransactions(outletId?: string) {
         customerPhone: t.customer_phone,
         pickupTime: t.pickup_time ? new Date(t.pickup_time) : undefined,
         status: (t.status as any) || 'completed',
+        paymentProofUrl: t.payment_proof_url,
         createdAt: new Date(t.created_at),
       }));
     },
@@ -126,7 +128,8 @@ export function useCreateTransaction() {
           customer_name: input.customerName,
           customer_phone: input.customerPhone,
           pickup_time: input.pickupTime?.toISOString(),
-          status: input.status || (input.orderType === 'bopis' ? 'pending' : 'completed'),
+          status: input.status || (input.orderType === 'bopis' ? 'awaiting_payment' : 'completed'),
+          payment_proof_url: input.paymentProofUrl,
         })
         .select()
         .single();

@@ -13,27 +13,31 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  Clock, 
-  Package, 
-  CheckCircle2, 
+import {
+  Clock,
+  Package,
+  CheckCircle2,
   ChefHat, 
   Phone, 
-  User 
+  User,
+  MapPin
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 
 export default function OnlineOrders() {
   const { user } = useAuth();
-  const selectedOutlet = user?.outletId || 'all';
+  const userOutletId = user?.outletId;
+  const isAdmin = user?.role === 'admin';
+  const selectedOutlet = userOutletId || (isAdmin ? 'all' : undefined);
+  
   const { data: transactions = [], isLoading, refetch } = useTransactions(selectedOutlet);
   const updateStatus = useUpdateTransactionStatus();
   const { toast } = useToast();
 
   const onlineOrders = transactions.filter(tx => 
     tx.orderType === 'bopis' && 
-    ['pending', 'preparing', 'ready_for_pickup'].includes(tx.status)
+    ['verified', 'preparing', 'ready_for_pickup'].includes(tx.status)
   );
 
   useEffect(() => {
@@ -45,11 +49,12 @@ export default function OnlineOrders() {
           event: 'INSERT',
           schema: 'public',
           table: 'transactions',
-          // Filter doesn't always work as expected in JS client for complex fields, 
-          // we'll filter in payload if needed but let's try the direct approach
-          filter: `order_type=eq.bopis`,
+          filter: userOutletId ? `outlet_id=eq.${userOutletId}` : undefined,
         },
         (payload) => {
+          // Additional check for order_type bopis if filter above is only on outlet_id
+          if (payload.new.order_type !== 'bopis') return;
+          
           console.log('New BOPIS order:', payload);
           toast({
             title: "Pesanan Baru!",
@@ -65,10 +70,12 @@ export default function OnlineOrders() {
           event: 'UPDATE',
           schema: 'public',
           table: 'transactions',
-          filter: `order_type=eq.bopis`,
+          filter: userOutletId ? `outlet_id=eq.${userOutletId}` : undefined,
         },
-        () => {
-          refetch();
+        (payload) => {
+          if (payload.new.order_type === 'bopis') {
+            refetch();
+          }
         }
       )
       .subscribe();
@@ -80,8 +87,10 @@ export default function OnlineOrders() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'pending':
-        return <Badge variant="destructive" className="animate-pulse">Menunggu</Badge>;
+      case 'awaiting_payment':
+        return <Badge variant="destructive">Menunggu Bayar</Badge>;
+      case 'verified':
+        return <Badge className="bg-green-100 text-green-700 border-green-200">Terverifikasi</Badge>;
       case 'preparing':
         return <Badge className="bg-orange-500 hover:bg-orange-600 text-white border-none text-[10px] sm:text-xs">Disiapkan</Badge>;
       case 'ready_for_pickup':
@@ -99,6 +108,18 @@ export default function OnlineOrders() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!selectedOutlet && !isAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-6 bg-muted/20 rounded-3xl border-2 border-dashed border-border/50">
+        <MapPin className="h-16 w-16 text-muted-foreground/20 mb-4" />
+        <h2 className="text-xl font-bold text-muted-foreground">Outlet Belum Terhubung</h2>
+        <p className="max-w-md text-muted-foreground mt-2">
+          Akun Anda belum terhubung ke cabang (outlet) manapun. Silakan hubungi Admin untuk mengatur outlet di Manajemen User agar Anda dapat mengelola pesanan online.
+        </p>
       </div>
     );
   }
@@ -167,13 +188,13 @@ export default function OnlineOrders() {
                 </div>
               </CardContent>
               <CardFooter className="bg-muted/30 pt-4 flex gap-2">
-                {order.status === 'pending' && (
+                {order.status === 'verified' && (
                   <Button 
                     className="flex-1 gap-2 text-xs sm:text-sm h-9 sm:h-10" 
                     onClick={() => handleUpdateStatus(order.id, 'preparing')}
                     disabled={updateStatus.isPending}
                   >
-                    <ChefHat className="h-4 w-4 shrink-0" /> Terima
+                    <ChefHat className="h-4 w-4 shrink-0" /> Terima & Proses
                   </Button>
                 )}
                 {order.status === 'preparing' && (

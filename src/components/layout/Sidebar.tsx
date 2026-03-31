@@ -13,6 +13,7 @@ import {
   X,
   Users,
   ShoppingBag,
+  ShieldCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -26,7 +27,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const { user, logout, isAdmin } = useAuth();
 
   const adminLinks = [
-    { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/verify-payments', icon: ShieldCheck, label: 'Verifikasi Pembayaran' },
     { to: '/online-orders', icon: ShoppingBag, label: 'Pesanan Online' },
     { to: '/outlets', icon: Store, label: 'Manajemen Outlet' },
     { to: '/users', icon: Users, label: 'Manajemen User' },

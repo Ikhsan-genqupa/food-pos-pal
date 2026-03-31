@@ -4,6 +4,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { useActiveOutlets } from '@/hooks/useOutlets';
 import { useCreateTransaction } from '@/hooks/useTransactions';
 import { useCart } from '@/contexts/CartContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -41,7 +42,8 @@ import {
   CheckCircle2, 
   UtensilsCrossed,
   User,
-  Phone
+  Phone,
+  ImagePlus
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -64,6 +66,8 @@ export default function OrderPage() {
   const [customerPhone, setCustomerPhone] = useState('');
   const [selectedOutlet, setSelectedOutlet] = useState('');
   const [pickupTime, setPickupTime] = useState('');
+  const [paymentProof, setPaymentProof] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const filteredProducts = products.filter((product) => {
     const matchesCategory = !selectedCategory || product.categoryId === selectedCategory;
@@ -84,8 +88,28 @@ export default function OrderPage() {
       return;
     }
 
+    if (!paymentProof) {
+      toast({ title: "Bukti Transfer Wajib", description: "Silakan unggah foto bukti transfer Anda", variant: "destructive" });
+      return;
+    }
+
     try {
-      // Create local date for pickup time
+      setIsUploading(true);
+      
+      // 1. Upload Payment Proof
+      const fileExt = paymentProof.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from('payment_proofs')
+        .upload(fileName, paymentProof);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('payment_proofs')
+        .getPublicUrl(fileName);
+
+      // 2. Create Transaction
       const today = new Date();
       const [hours, minutes] = pickupTime.split(':');
       const pickupDate = new Date(today.setHours(parseInt(hours), parseInt(minutes), 0, 0));
@@ -101,20 +125,23 @@ export default function OrderPage() {
         })),
         subtotal: total,
         total: total,
-        paymentMethod: 'tunai', // Default for BOPIS (pay at store)
+        paymentMethod: 'dana', // Default for BOPIS (non-tunai as per user request)
         cashReceived: 0,
         change: 0,
         orderType: 'bopis',
         customerName: customerName,
         customerPhone: customerPhone,
         pickupTime: pickupDate,
-        status: 'pending'
+        status: 'awaiting_payment',
+        paymentProofUrl: publicUrl
       });
 
+      setIsUploading(false);
       clearCart();
       setCheckoutOpen(false);
       setSuccessOpen(true);
     } catch (error: any) {
+      setIsUploading(false);
       toast({ title: "Gagal", description: error.message, variant: "destructive" });
     }
   };
@@ -302,7 +329,7 @@ export default function OrderPage() {
                 </Label>
                 <Select required onValueChange={setSelectedOutlet} value={selectedOutlet}>
                   <SelectTrigger className="rounded-2xl h-14 bg-muted/50 border-none shadow-inner px-5 font-medium">
-                    <SelectValue placeholder="Pilih Lokasi" />
+                    <SelectValue placeholder="Pilih Outlet Pengambilan" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl border-none shadow-2xl">
                     {outlets.map(outlet => (
@@ -326,6 +353,43 @@ export default function OrderPage() {
                   onChange={(e) => setPickupTime(e.target.value)}
                   className="rounded-2xl h-14 bg-muted/50 border-none shadow-inner px-5 font-medium"
                 />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <Label htmlFor="proof" className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2 px-1">
+                <ImagePlus className="h-3 w-3 text-primary" /> Bukti Transfer (Mandatori)
+              </Label>
+              <div className="relative">
+                <Input 
+                  id="proof" 
+                  type="file" 
+                  accept="image/*"
+                  required 
+                  onChange={(e) => setPaymentProof(e.target.files ? e.target.files[0] : null)}
+                  className="hidden"
+                />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className={cn(
+                    "w-full h-20 rounded-2xl border-2 border-dashed flex flex-col gap-1 transition-all",
+                    paymentProof ? "border-green-500 bg-green-50" : "border-border hover:border-primary/50"
+                  )}
+                  onClick={() => document.getElementById('proof')?.click()}
+                >
+                  {paymentProof ? (
+                    <>
+                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      <span className="text-xs font-bold text-green-700">{paymentProof.name}</span>
+                    </>
+                  ) : (
+                    <>
+                      <ImagePlus className="h-6 w-6 text-muted-foreground/50" />
+                      <span className="text-xs font-bold text-muted-foreground">Klik untuk Unggah Foto Bukti Transfer</span>
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
 
@@ -374,8 +438,8 @@ export default function OrderPage() {
               <Button type="button" variant="ghost" onClick={() => setCheckoutOpen(false)} className="rounded-2xl h-14 px-8 font-black uppercase tracking-widest text-muted-foreground hover:bg-muted">
                 Kembali
               </Button>
-              <Button type="submit" disabled={createTransaction.isPending} className="flex-1 rounded-2xl h-14 font-black uppercase tracking-[0.2em] text-lg shadow-2xl shadow-primary/30 active:scale-95 transition-all">
-                {createTransaction.isPending ? "Mengirim..." : "Pesan Sekarang"}
+              <Button type="submit" disabled={createTransaction.isPending || isUploading} className="flex-1 rounded-2xl h-14 font-black uppercase tracking-[0.2em] text-lg shadow-2xl shadow-primary/30 active:scale-95 transition-all">
+                {createTransaction.isPending || isUploading ? "Mengirim..." : "Pesan Sekarang"}
               </Button>
             </DialogFooter>
           </form>

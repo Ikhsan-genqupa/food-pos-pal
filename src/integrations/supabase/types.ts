@@ -239,6 +239,7 @@ export type Database = {
           customer_phone: string | null
           pickup_time: string | null
           status: string | null
+          payment_proof_url: string | null
         }
         Insert: {
           cash_received?: number
@@ -256,6 +257,7 @@ export type Database = {
           customer_phone?: string | null
           pickup_time?: string | null
           status?: string | null
+          payment_proof_url?: string | null
         }
         Update: {
           cash_received?: number
@@ -273,6 +275,7 @@ export type Database = {
           customer_phone?: string | null
           pickup_time?: string | null
           status?: string | null
+          payment_proof_url?: string | null
         }
         Relationships: [
           {
