@@ -85,6 +85,7 @@ export default function AdminOnlineOrders() {
           transactionNumber: order.transactionNumber,
           total: order.total,
           pickupTime: order.pickupTime,
+          orderSource: order.orderSource,
           items: order.items.map((i: any) => `${i.quantity}x ${i.productName}`)
         }
       });

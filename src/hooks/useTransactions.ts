@@ -17,6 +17,7 @@ export interface CreateTransactionInput {
   customerPhone?: string;
   pickupTime?: Date;
   status?: string;
+  orderSource?: 'online' | 'offline';
   paymentProofUrl?: string;
 }
 
@@ -97,6 +98,7 @@ export function useTransactions(outletId?: string) {
         customerPhone: t.customer_phone,
         pickupTime: t.pickup_time ? new Date(t.pickup_time) : undefined,
         status: (t.status as any) || 'completed',
+        orderSource: t.order_source as 'online' | 'offline',
         paymentProofUrl: t.payment_proof_url,
         createdAt: new Date(t.created_at),
       }));
@@ -129,6 +131,7 @@ export function useCreateTransaction() {
           customer_phone: input.customerPhone,
           pickup_time: input.pickupTime?.toISOString(),
           status: input.status || (input.orderType === 'bopis' ? 'awaiting_payment' : 'completed'),
+          order_source: input.orderSource || 'offline',
           payment_proof_url: input.paymentProofUrl,
         })
         .select()
@@ -317,6 +320,7 @@ export function useTransaction(id?: string) {
         customerPhone: data.customer_phone,
         pickupTime: data.pickup_time ? new Date(data.pickup_time) : undefined,
         status: (data.status as any) || 'completed',
+        orderSource: data.order_source as 'online' | 'offline',
         paymentProofUrl: data.payment_proof_url,
         createdAt: new Date(data.created_at),
       };

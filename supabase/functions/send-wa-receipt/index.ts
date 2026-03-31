@@ -17,7 +17,7 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     console.log("Data diterima:", JSON.stringify(body));
 
-    const { customerName, customerPhone, transactionNumber, total, pickupTime, items } = body;
+    const { customerName, customerPhone, transactionNumber, total, pickupTime, items, orderSource } = body;
 
     const fonnteToken = Deno.env.get("FONNTE_API_TOKEN");
     if (!fonnteToken) {
@@ -46,6 +46,7 @@ Halo *${customerName || 'Pelanggan'}*, pembayaran Anda telah berhasil kami verif
 
 *Detail Pesanan:*
 📌 No. Transaksi: ${transactionNumber || '-'}
+📍 Sumber Pesanan: ${orderSource === 'online' ? 'Online (Aplikasi)' : 'Offline (Kasir)'}
 🍴 Menu:
 ${Array.isArray(items) ? items.map((i: string) => `- ${i}`).join('\n') : '-'}
 

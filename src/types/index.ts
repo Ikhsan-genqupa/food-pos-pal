@@ -73,6 +73,7 @@ export interface Transaction {
   customerPhone?: string;
   pickupTime?: Date;
   status: 'awaiting_payment' | 'awaiting_verification' | 'verified' | 'preparing' | 'ready_for_pickup' | 'completed' | 'cancelled';
+  orderSource?: 'online' | 'offline';
   paymentProofUrl?: string;
   createdAt: Date;
 }

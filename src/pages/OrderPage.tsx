@@ -113,6 +113,7 @@ export default function OrderPage() {
         customerPhone: customerPhone,
         pickupTime: pickupDate,
         status: 'awaiting_payment',
+        orderSource: 'online',
       });
 
       clearCart();

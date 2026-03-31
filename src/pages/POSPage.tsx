@@ -72,6 +72,7 @@ export default function POSPage() {
       cashReceived: transaction.cashReceived,
       change: transaction.change,
       cashierName: user?.email,
+      orderSource: 'offline',
     });
   };
 

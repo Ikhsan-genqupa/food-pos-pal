@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { FileSpreadsheet, FileText, Filter, Store, TrendingUp, Receipt, ShoppingBag, Wallet } from 'lucide-react';
+import { FileSpreadsheet, FileText, Filter, Store, TrendingUp, Receipt, ShoppingBag, Wallet, Globe } from 'lucide-react';
 import {
   BarChart,
   Bar,
@@ -84,6 +84,7 @@ export default function ReportsPage() {
 
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('all');
+  const [selectedOrderSource, setSelectedOrderSource] = useState<string>('all');
 
   const getPaymentLabel = (method: string | undefined | null) => {
     if (!method) return '-';
@@ -128,6 +129,10 @@ export default function ReportsPage() {
     if (selectedPaymentMethod !== 'all') {
       txList = txList.filter(tx => tx.paymentMethod.toLowerCase() === selectedPaymentMethod.toLowerCase());
     }
+
+    if (selectedOrderSource !== 'all') {
+      txList = txList.filter(tx => tx.orderSource === selectedOrderSource);
+    }
     
     return txList;
   };
@@ -159,6 +164,14 @@ export default function ReportsPage() {
   const daysInRange = Math.ceil(diffInTime / (1000 * 60 * 60 * 24)) + 1;
   const avgDailyRevenue = totalRevenue / daysInRange;
   const avgDailyTransactions = totalTransactions / daysInRange;
+  
+  const totalOnlineRevenue = filteredTransactions
+    .filter(tx => tx.orderSource === 'online')
+    .reduce((sum, tx) => sum + tx.total, 0);
+
+  const totalOfflineRevenue = filteredTransactions
+    .filter(tx => tx.orderSource === 'offline')
+    .reduce((sum, tx) => sum + tx.total, 0);
 
   const outletSummaries = selectedOutlet === 'all' ? Array.from(
     exportData.reduce((acc, row) => {
@@ -754,6 +767,19 @@ export default function ReportsPage() {
               </Select>
             </div>
           )}
+          <div className="space-y-2">
+            <Label>Sumber Pesanan</Label>
+            <Select value={selectedOrderSource} onValueChange={setSelectedOrderSource}>
+              <SelectTrigger>
+                <SelectValue placeholder="Semua Sumber" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Sumber</SelectItem>
+                <SelectItem value="online">🌐 Online (Aplikasi)</SelectItem>
+                <SelectItem value="offline">🏪 Offline (Kasir)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
@@ -762,6 +788,16 @@ export default function ReportsPage() {
         <div className="stat-card text-center border-t-4 border-teal-500">
           <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Total Pendapatan</p>
           <p className="text-xl font-black text-teal-600">{formatCurrency(totalRevenue)}</p>
+          <div className="mt-2 pt-2 border-t border-border flex flex-col gap-1">
+            <p className="text-[9px] flex justify-between items-center">
+              <span className="flex items-center gap-1"><Globe className="h-2 w-2 text-blue-500" /> Online:</span>
+              <span className="font-bold text-blue-600">{formatCurrency(totalOnlineRevenue)}</span>
+            </p>
+            <p className="text-[9px] flex justify-between items-center">
+              <span className="flex items-center gap-1"><Store className="h-2 w-2 text-emerald-500" /> Offline:</span>
+              <span className="font-bold text-emerald-600">{formatCurrency(totalOfflineRevenue)}</span>
+            </p>
+          </div>
         </div>
         <div className="stat-card text-center">
           <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Total Transaksi</p>

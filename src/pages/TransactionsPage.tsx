@@ -34,7 +34,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Search, Receipt, Eye, Printer, Store, Trash2, AlertTriangle, ShieldAlert, CheckSquare } from 'lucide-react';
+import { Search, Receipt, Eye, Printer, Store, Trash2, AlertTriangle, ShieldAlert, CheckSquare, Globe } from 'lucide-react';
 import { Transaction } from '@/types';
 import logo from '@/assets/logo.png';
 
@@ -45,6 +45,7 @@ export default function TransactionsPage() {
   const [selectedOutlet, setSelectedOutlet] = useState<string>(
     isAdmin ? 'all' : (user?.outletId || '')
   );
+  const [selectedSource, setSelectedSource] = useState<string>('all');
 
   // Sync selected outlet with user profile once loaded
   React.useEffect(() => {
@@ -72,7 +73,8 @@ export default function TransactionsPage() {
   
   const filteredTransactions = transactions.filter((tx) => {
     const matchesSearch = tx.transactionNumber.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
+    const matchesSource = selectedSource === 'all' || tx.orderSource === selectedSource;
+    return matchesSearch && matchesSource;
   });
 
   const handlePrint = () => {
@@ -313,6 +315,16 @@ export default function TransactionsPage() {
             </SelectContent>
           </Select>
         )}
+        <Select value={selectedSource} onValueChange={setSelectedSource}>
+          <SelectTrigger className="w-full sm:w-48">
+            <SelectValue placeholder="Semua Sumber" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Semua Sumber</SelectItem>
+            <SelectItem value="online">🌐 Online</SelectItem>
+            <SelectItem value="offline">🏪 Offline</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Current view indicator */}
@@ -342,6 +354,7 @@ export default function TransactionsPage() {
                   <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground">Outlet</th>
                 )}
                 <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground">Item</th>
+                <th className="text-center py-2.5 px-4 text-xs font-medium text-muted-foreground">Sumber</th>
                 <th className="text-right py-2.5 px-4 text-xs font-medium text-muted-foreground">Total</th>
                 <th className="text-right py-2.5 px-4 text-xs font-medium text-muted-foreground">Tanggal</th>
                 <th className="text-right py-2.5 px-4 text-xs font-medium text-muted-foreground w-32">Aksi</th>
@@ -369,6 +382,17 @@ export default function TransactionsPage() {
                     )}
                     <td className="py-2.5 px-4 text-xs">
                       {tx.items.reduce((sum, item) => sum + item.quantity, 0)} item
+                    </td>
+                    <td className="py-2.5 px-4 text-xs text-center">
+                      {tx.orderSource === 'online' ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold text-[10px]">
+                          <Globe className="h-3 w-3" /> ONLINE
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-bold text-[10px]">
+                          <Store className="h-3 w-3" /> OFFLINE
+                        </span>
+                      )}
                     </td>
                     <td className="py-2.5 px-4 text-xs text-right font-medium">
                       {formatCurrency(tx.total)}
