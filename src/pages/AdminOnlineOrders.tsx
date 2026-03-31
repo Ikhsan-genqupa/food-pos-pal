@@ -3,16 +3,10 @@ import { useTransactions, useUpdateTransactionStatus } from '@/hooks/useTransact
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { 
   Dialog, 
   DialogContent, 
@@ -40,7 +34,7 @@ export default function AdminOnlineOrders() {
   const [isVerifying, setIsVerifying] = useState<string | null>(null);
 
   const pendingPayments = transactions.filter(tx => 
-    tx.orderType === 'bopis' && tx.status === 'awaiting_payment'
+    tx.orderType === 'bopis' && (tx.status === 'awaiting_payment' || tx.status === 'awaiting_verification')
   );
 
   useEffect(() => {
@@ -155,7 +149,12 @@ export default function AdminOnlineOrders() {
                 <div className="flex justify-between items-start mb-2">
                   <span className="text-[10px] font-mono font-bold text-muted-foreground">{order.transactionNumber}</span>
                   <div className="flex flex-col items-end gap-1">
-                    <Badge variant="destructive" className="animate-pulse">Awaiting Payment</Badge>
+                    <Badge 
+                      variant={order.status === 'awaiting_verification' ? "outline" : "destructive"} 
+                      className={cn("animate-pulse", order.status === 'awaiting_verification' && "bg-amber-100 text-amber-700 border-amber-200")}
+                    >
+                      {order.status === 'awaiting_verification' ? "Awaiting Verification" : "Awaiting Payment"}
+                    </Badge>
                     <Badge variant="outline" className="text-[9px] border-primary/20 text-primary font-black py-0 h-4 px-1.5 bg-primary/5 uppercase">
                       {getPaymentLabel(order.paymentMethod)}
                     </Badge>

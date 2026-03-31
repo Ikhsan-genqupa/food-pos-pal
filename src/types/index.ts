@@ -72,7 +72,7 @@ export interface Transaction {
   customerName?: string;
   customerPhone?: string;
   pickupTime?: Date;
-  status: 'awaiting_payment' | 'verified' | 'preparing' | 'ready_for_pickup' | 'completed' | 'cancelled';
+  status: 'awaiting_payment' | 'awaiting_verification' | 'verified' | 'preparing' | 'ready_for_pickup' | 'completed' | 'cancelled';
   paymentProofUrl?: string;
   createdAt: Date;
 }

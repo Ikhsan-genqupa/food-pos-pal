@@ -349,9 +349,7 @@ export function useUploadPaymentProof() {
         .from('transactions')
         .update({ 
           payment_proof_url: publicUrl,
-          // Optionally update status to something like 'payment_review' 
-          // or keep as 'awaiting_payment' until admin verifies.
-          // User said: "simpan ke bucket payment_proofs dan update baris data transaksi tersebut (isi kolom payment_proof_url)."
+          status: 'awaiting_verification',
         })
         .eq('id', id)
         .select()

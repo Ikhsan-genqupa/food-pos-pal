@@ -89,6 +89,8 @@ export default function OnlineOrders() {
     switch (status) {
       case 'awaiting_payment':
         return <Badge variant="destructive">Menunggu Bayar</Badge>;
+      case 'awaiting_verification':
+        return <Badge className="bg-amber-100 text-amber-700 border-amber-200 animate-pulse">Menunggu Verifikasi</Badge>;
       case 'verified':
         return <Badge className="bg-green-100 text-green-700 border-green-200">Terverifikasi</Badge>;
       case 'preparing':

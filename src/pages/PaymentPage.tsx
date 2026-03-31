@@ -63,7 +63,7 @@ export default function PaymentPage() {
               <div className="bg-white/20 backdrop-blur-md rounded-full p-4 mb-6 animate-bounce">
                 <CheckCircle2 className="h-12 w-12 text-white" />
               </div>
-              <h1 className="text-3xl sm:text-4xl font-black tracking-tight mb-3">PESANAN TERKIRIM!</h1>
+              <h1 className="text-3xl sm:text-4xl font-black tracking-tight mb-3">PESANAN BERHASIL DIBUAT</h1>
               <p className="text-green-50 text-lg font-medium max-w-md">
                 Terima kasih, {transaction.customerName}! Pesanan Anda <span className="font-black text-white">#{transaction.transactionNumber}</span> telah berhasil dibuat.
               </p>
@@ -110,7 +110,7 @@ export default function PaymentPage() {
                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Waktu Ambil</p>
                         <p className="font-bold flex items-center gap-2">
                           <Clock className="h-4 w-4 text-primary" />
-                          {transaction.pickupTime?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {transaction.pickupTime ? new Date(transaction.pickupTime).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short', hourCycle: 'h23' }) + ' WIB' : '-'}
                         </p>
                       </div>
                       <div className="space-y-1">
@@ -148,12 +148,12 @@ export default function PaymentPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-8 flex-1 flex flex-col justify-between space-y-8">
-                  {transaction.paymentProofUrl ? (
+                  {transaction.status === 'awaiting_verification' || transaction.paymentProofUrl ? (
                     <div className="bg-green-50 rounded-3xl p-10 text-center border-2 border-dashed border-green-200 animate-in fade-in zoom-in duration-500 my-auto">
                       <div className="bg-green-500 text-white rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6 shadow-xl shadow-green-200">
                         <CheckCircle2 className="h-8 w-8" />
                       </div>
-                      <h3 className="text-xl font-black text-green-900 mb-2">SIAP DIKONFIRMASI!</h3>
+                      <h3 className="text-xl font-black text-green-900 mb-2">MENUNGGU VERIFIKASI</h3>
                       <p className="text-green-700 font-medium leading-relaxed">
                         Bukti pembayaran berhasil dikirim. Silakan tunggu konfirmasi Admin melalui WhatsApp.
                       </p>
