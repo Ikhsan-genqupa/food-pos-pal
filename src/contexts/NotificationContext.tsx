@@ -10,6 +10,9 @@ interface NotificationContextType {
   setLastNewOrder: (order: any | null) => void;
   setLastVerifiedOrder: (order: any | null) => void;
   setLastUploadOrder: (order: any | null) => void;
+  isSoundEnabled: boolean;
+  toggleSound: () => void;
+  playNotificationSound: () => void;
   refreshPendingCount: () => Promise<void>;
 }
 
@@ -21,6 +24,37 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [lastNewOrder, setLastNewOrder] = useState<any | null>(null);
   const [lastVerifiedOrder, setLastVerifiedOrder] = useState<any | null>(null);
   const [lastUploadOrder, setLastUploadOrder] = useState<any | null>(null);
+  const [isSoundEnabled, setIsSoundEnabled] = useState<boolean>(() => {
+    const saved = localStorage.getItem('notification_sound_enabled');
+    return saved === 'true';
+  });
+
+  const audioRef = React.useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
+  }, []);
+
+  const toggleSound = () => {
+    const newVal = !isSoundEnabled;
+    setIsSoundEnabled(newVal);
+    localStorage.setItem('notification_sound_enabled', String(newVal));
+    
+    // "Prime" the audio on activation to get browser permission
+    if (newVal && audioRef.current) {
+        audioRef.current.play()
+            .then(() => audioRef.current?.pause())
+            .catch(e => console.log("Audio priming blocked:", e));
+    }
+  };
+
+  const playNotificationSound = () => {
+    if (isSoundEnabled && audioRef.current) {
+        // Reset playback position to start if it was already playing
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(e => console.log("Audio playback failed:", e));
+    }
+  };
 
   const fetchPendingCount = async () => {
     if (!user) return;
@@ -117,6 +151,9 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         setLastNewOrder,
         setLastVerifiedOrder,
         setLastUploadOrder,
+        isSoundEnabled,
+        toggleSound,
+        playNotificationSound,
         refreshPendingCount: fetchPendingCount,
       }}
     >
