@@ -49,7 +49,7 @@ export const FloatingOrderAlert: React.FC = () => {
           </div>
           <div className="flex-1">
             <h3 className="font-black text-lg leading-tight uppercase tracking-widest">
-              {isVerifiedType ? "PESANAN SIAP PROSES!" : "ADA PESANAN BARU!"}
+              {isVerifiedType ? "ADA PESANAN ONLINE" : "ADA PESANAN BARU!"}
             </h3>
             <p className="text-sm font-bold text-white/90 mt-1">
               {isVerifiedType 
@@ -86,7 +86,7 @@ export const FloatingOrderAlert: React.FC = () => {
               else setLastNewOrder(null);
             }}
           >
-            {isVerifiedType ? "LIHAT DAPUR" : "LIHAT PESANAN"} <ArrowRight className="h-5 w-5" />
+            {isVerifiedType ? "LIHAT PESANAN" : "LIHAT PESANAN"} <ArrowRight className="h-5 w-5" />
           </Button>
         </div>
       </div>
