@@ -113,6 +113,23 @@ export default function DashboardPage() {
     sum + tx.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0
   );
 
+  // Calculate days in range for average
+  let daysInDashboard = 7; // Default to week
+  if (startDate && endDate) {
+    const diff = Math.abs(new Date(endDate).getTime() - new Date(startDate).getTime());
+    daysInDashboard = Math.ceil(diff / (1000 * 60 * 60 * 24)) + 1;
+  } else if (filteredTransactions.length > 0) {
+    // If no explicit filter, we use the span of transactions found
+    const dates = filteredTransactions.map(tx => tx.createdAt.getTime());
+    const minDate = Math.min(...dates);
+    const maxDate = Math.max(...dates);
+    const diff = Math.abs(maxDate - minDate);
+    daysInDashboard = Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)) + 1);
+  }
+  
+  const avgDailyRevenue = totalRevenue / daysInDashboard;
+  const avgDailyTransactions = totalTransactions / daysInDashboard;
+
   const lowStockCount = stocks.filter(s => s.quantity < 10 && (s.product?.isBundle !== true)).length;
 
   const productColors = [
@@ -127,14 +144,15 @@ export default function DashboardPage() {
   ];
 
   // Calculate Product Sales Data
-  const productMap = new Map<string, { name: string, value: number }>();
+  const productMap = new Map<string, { name: string, value: number, quantity: number }>();
   
   filteredTransactions.forEach(tx => {
     tx.items.forEach(item => {
-      const current = productMap.get(item.productId) || { name: item.productName || 'Produk', value: 0 };
+      const current = productMap.get(item.productId) || { name: item.productName || 'Produk', value: 0, quantity: 0 };
       productMap.set(item.productId, {
         name: current.name,
-        value: current.value + (item.quantity * item.price)
+        value: current.value + (item.quantity * item.price),
+        quantity: current.quantity + item.quantity
       });
     });
   });
@@ -297,6 +315,17 @@ export default function DashboardPage() {
           value={formatCurrency(dailyCash)}
           icon={Wallet}
         />
+        <StatCard
+          title="Avg. Pendapatan"
+          value={formatCurrency(avgDailyRevenue)}
+          icon={TrendingUp}
+          variant="primary"
+        />
+        <StatCard
+          title="Avg. Transaksi"
+          value={avgDailyTransactions.toFixed(1)}
+          icon={Receipt}
+        />
       </div>
 
       {/* Charts */}
@@ -401,7 +430,12 @@ export default function DashboardPage() {
                     className="h-3 w-3 rounded-full flex-shrink-0"
                     style={{ backgroundColor: item.color }}
                   />
-                  <span className="text-muted-foreground font-medium flex-1 leading-tight">{item.name}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-muted-foreground font-medium truncate leading-tight">{item.name}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {item.quantity} terjual · {formatCurrency(item.value)}
+                    </p>
+                  </div>
                   <span className="font-bold text-foreground tabular-nums">
                     {totalProductSales > 0 ? Math.round((item.value / totalProductSales) * 100) : 0}%
                   </span>
@@ -438,6 +472,14 @@ export default function DashboardPage() {
               <span className="font-medium">
                 {totalTransactions > 0 ? formatCurrency(totalRevenue / totalTransactions) : formatCurrency(0)}
               </span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Avg. Transaksi Harian</span>
+              <span className="font-medium">{avgDailyTransactions.toFixed(1)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Avg. Pendapatan Harian</span>
+              <span className="font-medium">{formatCurrency(avgDailyRevenue)}</span>
             </div>
           </div>
         </div>

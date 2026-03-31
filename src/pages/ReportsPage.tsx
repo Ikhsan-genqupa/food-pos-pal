@@ -153,6 +153,11 @@ export default function ReportsPage() {
   const totalRevenue = exportData.reduce((sum, row) => sum + row.Total, 0);
   const totalTransactions = [...new Set(exportData.map(r => r['ID Transaksi']))].length;
   const avgTransaction = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
+  
+  const diffInTime = Math.abs(new Date(endDate).getTime() - new Date(startDate).getTime());
+  const daysInRange = Math.ceil(diffInTime / (1000 * 60 * 60 * 24)) + 1;
+  const avgDailyRevenue = totalRevenue / daysInRange;
+  const avgDailyTransactions = totalTransactions / daysInRange;
 
   const outletSummaries = selectedOutlet === 'all' ? Array.from(
     exportData.reduce((acc, row) => {
@@ -183,13 +188,14 @@ export default function ReportsPage() {
     '#6366 indigo', // Indigo but better color
   ];
 
-  const productMap = new Map<string, { name: string, value: number }>();
+  const productMap = new Map<string, { name: string, value: number, quantity: number }>();
   filteredTransactions.forEach(tx => {
     tx.items.forEach(item => {
-      const current = productMap.get(item.productId) || { name: item.productName || 'Produk', value: 0 };
+      const current = productMap.get(item.productId) || { name: item.productName || 'Produk', value: 0, quantity: 0 };
       productMap.set(item.productId, {
         name: current.name,
-        value: current.value + item.total
+        value: current.value + item.total,
+        quantity: current.quantity + item.quantity
       });
     });
   });
@@ -750,18 +756,26 @@ export default function ReportsPage() {
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="stat-card text-center border-t-4 border-teal-500">
-          <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1">Total Pendapatan</p>
-          <p className="text-2xl font-black text-teal-600">{formatCurrency(totalRevenue)}</p>
+          <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Total Pendapatan</p>
+          <p className="text-xl font-black text-teal-600">{formatCurrency(totalRevenue)}</p>
         </div>
         <div className="stat-card text-center">
-          <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1">Total Transaksi</p>
-          <p className="text-2xl font-black text-foreground">{totalTransactions}</p>
+          <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Total Transaksi</p>
+          <p className="text-xl font-black text-foreground">{totalTransactions}</p>
         </div>
         <div className="stat-card text-center">
-          <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1">Rata-rata Transaksi</p>
-          <p className="text-2xl font-black text-foreground">{formatCurrency(avgTransaction)}</p>
+          <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Rata-rata Transaksi</p>
+          <p className="text-xl font-black text-foreground">{formatCurrency(avgTransaction)}</p>
+        </div>
+        <div className="stat-card text-center">
+          <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Pendapatan Harian</p>
+          <p className="text-xl font-black text-teal-600">{formatCurrency(avgDailyRevenue)}</p>
+        </div>
+        <div className="stat-card text-center">
+          <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Transaksi Harian</p>
+          <p className="text-xl font-black text-foreground">{avgDailyTransactions.toFixed(1)}</p>
         </div>
       </div>
 
@@ -865,8 +879,13 @@ export default function ReportsPage() {
                     className="legend-color h-2 w-2 rounded-full flex-shrink-0"
                     style={{ backgroundColor: item.color }}
                   />
-                  <span className="text-muted-foreground font-medium flex-1 text-[10px] leading-tight">{item.name}</span>
-                  <span className="font-bold text-foreground text-[10px]">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-muted-foreground font-medium truncate text-[10px] leading-tight">{item.name}</p>
+                    <p className="text-[9px] text-muted-foreground">
+                      {item.quantity} terjual · {formatCurrency(item.value)}
+                    </p>
+                  </div>
+                  <span className="font-bold text-foreground text-[10px] tabular-nums">
                     {totalProductSales > 0 ? Math.round((item.value / totalProductSales) * 100) : 0}%
                   </span>
                 </div>
