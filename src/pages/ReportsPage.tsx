@@ -4,6 +4,7 @@ import { useTransactions } from '@/hooks/useTransactions';
 import { useOutlets } from '@/hooks/useOutlets';
 import { useCategories } from '@/hooks/useCategories';
 import { formatCurrency, formatDate, formatDateShort } from '@/lib/utils';
+import { toZonedTime, format as formatTz } from 'date-fns-tz';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -43,9 +44,7 @@ export default function ReportsPage() {
   }, [user?.outletId, isAdmin]);
 
   const formatYMD = (date: Date) => {
-    const d = new Date(date);
-    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-    return d.toISOString().split('T')[0];
+    return formatTz(toZonedTime(date, 'Asia/Jakarta'), 'yyyy-MM-dd', { timeZone: 'Asia/Jakarta' });
   };
 
   const today = new Date();
@@ -75,8 +74,11 @@ export default function ReportsPage() {
   };
 
   const setThisMonth = () => {
-    const start = new Date(today.getFullYear(), today.getMonth(), 1);
-    const end = new Date(today.getFullYear(), today.getMonth() + 1, 0); // Last day of month
+    // Get first day of current month in Jakarta
+    const nowJakarta = toZonedTime(new Date(), 'Asia/Jakarta');
+    const start = new Date(nowJakarta.getFullYear(), nowJakarta.getMonth(), 1);
+    const end = new Date(nowJakarta.getFullYear(), nowJakarta.getMonth() + 1, 0); 
+    
     setStartDate(formatYMD(start));
     setEndDate(formatYMD(end));
     setFilterType('month');
@@ -117,13 +119,16 @@ export default function ReportsPage() {
     let txList = [...transactions];
     
     if (startDate) {
-      const start = new Date(startDate);
-      txList = txList.filter(tx => new Date(tx.createdAt) >= start);
+      // Create a date object for startDate at 00:00:00 in Asia/Jakarta
+      const [year, month, day] = startDate.split('-').map(Number);
+      const start = toZonedTime(new Date(year, month - 1, day, 0, 0, 0, 0), 'Asia/Jakarta');
+      txList = txList.filter(tx => tx.createdAt >= start);
     }
     if (endDate) {
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-      txList = txList.filter(tx => new Date(tx.createdAt) <= end);
+      // Create a date object for endDate at 23:59:59.999 in Asia/Jakarta
+      const [year, month, day] = endDate.split('-').map(Number);
+      const end = toZonedTime(new Date(year, month - 1, day, 23, 59, 59, 999), 'Asia/Jakarta');
+      txList = txList.filter(tx => tx.createdAt <= end);
     }
 
     if (selectedPaymentMethod !== 'all') {

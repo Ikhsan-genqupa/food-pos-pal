@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Sidebar from './Sidebar';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { NotificationListener } from '../notifications/NotificationListener';
 
 export default function DashboardLayout() {
   const { isAuthenticated } = useAuth();
@@ -39,6 +40,7 @@ export default function DashboardLayout() {
           <Outlet />
         </main>
       </div>
+      <NotificationListener />
     </div>
   );
 }
