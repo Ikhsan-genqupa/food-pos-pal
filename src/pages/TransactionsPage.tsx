@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTransactions } from '@/hooks/useTransactions';
+import { 
+  useTransactions, 
+  useDeleteTransaction, 
+  useDeleteBulkTransactions, 
+  useClearAllTransactions 
+} from '@/hooks/useTransactions';
 import { useOutlets } from '@/hooks/useOutlets';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -18,7 +24,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Search, Receipt, Eye, Printer, Store } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Search, Receipt, Eye, Printer, Store, Trash2, AlertTriangle, ShieldAlert, CheckSquare } from 'lucide-react';
 import { Transaction } from '@/types';
 import logo from '@/assets/logo.png';
 
@@ -39,9 +55,20 @@ export default function TransactionsPage() {
 
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   
+  // Selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
+  const [isClearAllDialogOpen, setIsClearAllDialogOpen] = useState(false);
+  const [verificationText, setVerificationText] = useState('');
+
   // Use real data hook
   const { data: transactions = [], isLoading } = useTransactions(selectedOutlet);
   const { data: outlets = [] } = useOutlets();
+  
+  const deleteTransaction = useDeleteTransaction();
+  const deleteBulk = useDeleteBulkTransactions();
+  const clearAll = useClearAllTransactions();
   
   const filteredTransactions = transactions.filter((tx) => {
     const matchesSearch = tx.transactionNumber.toLowerCase().includes(searchQuery.toLowerCase());
@@ -181,15 +208,84 @@ export default function TransactionsPage() {
     }
   };
 
+  const handleToggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleToggleSelectAll = () => {
+    if (selectedIds.size === filteredTransactions.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredTransactions.map(tx => tx.id)));
+    }
+  };
+
+  const handleConfirmSingleDelete = async () => {
+    if (!transactionToDelete) return;
+    await deleteTransaction.mutateAsync(transactionToDelete);
+    setTransactionToDelete(null);
+  };
+
+  const handleConfirmBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    await deleteBulk.mutateAsync(Array.from(selectedIds));
+    setSelectedIds(new Set());
+    setIsBulkDeleteDialogOpen(false);
+  };
+
+  const handleConfirmClearAll = async () => {
+    if (verificationText.toUpperCase() !== 'HAPUS') return;
+    await clearAll.mutateAsync();
+    setVerificationText('');
+    setIsClearAllDialogOpen(false);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-foreground">Riwayat Transaksi</h1>
-        <p className="text-sm text-muted-foreground">
-          {isAdmin ? 'Lihat semua transaksi' : `Transaksi ${user?.outletName || 'Outlet'}`}
-        </p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-foreground">Riwayat Transaksi</h1>
+          <p className="text-sm text-muted-foreground">
+            {isAdmin ? 'Lihat semua transaksi' : `Transaksi ${user?.outletName || 'Outlet'}`}
+          </p>
+        </div>
+        
+        {isAdmin && (
+          <Button 
+            variant="outline" 
+            className="text-destructive hover:bg-destructive/10 border-destructive gap-2 font-bold"
+            onClick={() => setIsClearAllDialogOpen(true)}
+          >
+            <ShieldAlert className="h-4 w-4" />
+            Bersihkan Semua Data
+          </Button>
+        )}
       </div>
+
+      {/* Bulk Action Bar */}
+      {selectedIds.size > 0 && (
+        <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 flex items-center justify-between animate-in fade-in slide-in-from-top-4">
+          <div className="flex items-center gap-2">
+            <CheckSquare className="h-4 w-4 text-primary" />
+            <span className="text-sm font-bold text-primary">{selectedIds.size} Transaksi Terpilih</span>
+          </div>
+          <Button 
+            variant="destructive" 
+            size="sm" 
+            className="gap-2 font-bold"
+            onClick={() => setIsBulkDeleteDialogOpen(true)}
+          >
+            <Trash2 className="h-4 w-4" />
+            Hapus Data Terpilih
+          </Button>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
@@ -233,6 +329,14 @@ export default function TransactionsPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/50">
+                <th className="py-2.5 px-4 w-10">
+                   {isAdmin && (
+                     <Checkbox 
+                        checked={selectedIds.size === filteredTransactions.length && filteredTransactions.length > 0}
+                        onCheckedChange={handleToggleSelectAll}
+                     />
+                   )}
+                </th>
                 <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground">ID</th>
                 {isAdmin && (
                   <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground">Outlet</th>
@@ -240,14 +344,23 @@ export default function TransactionsPage() {
                 <th className="text-left py-2.5 px-4 text-xs font-medium text-muted-foreground">Item</th>
                 <th className="text-right py-2.5 px-4 text-xs font-medium text-muted-foreground">Total</th>
                 <th className="text-right py-2.5 px-4 text-xs font-medium text-muted-foreground">Tanggal</th>
-                <th className="text-right py-2.5 px-4 text-xs font-medium text-muted-foreground">Aksi</th>
+                <th className="text-right py-2.5 px-4 text-xs font-medium text-muted-foreground w-32">Aksi</th>
               </tr>
             </thead>
             <tbody>
               {filteredTransactions.map((tx) => {
                 const outlet = tx.outlet;
+                const isSelected = selectedIds.has(tx.id);
                 return (
-                  <tr key={tx.id} className="border-b border-border/50 hover:bg-muted/30">
+                  <tr key={tx.id} className={cn("border-b border-border/50 hover:bg-muted/30 transition-colors", isSelected && "bg-primary/5")}>
+                    <td className="py-2.5 px-4 text-center">
+                       {isAdmin && (
+                         <Checkbox 
+                            checked={isSelected}
+                            onCheckedChange={() => handleToggleSelect(tx.id)}
+                         />
+                       )}
+                    </td>
                     <td className="py-2.5 px-4 text-xs font-mono">{tx.transactionNumber}</td>
                     {isAdmin && (
                       <td className="py-2.5 px-4 text-xs">
@@ -263,16 +376,25 @@ export default function TransactionsPage() {
                     <td className="py-2.5 px-4 text-xs text-right text-muted-foreground">
                       {formatDate(tx.createdAt)}
                     </td>
-                    <td className="py-2.5 px-4 text-right">
+                    <td className="py-2.5 px-4 text-right flex justify-end gap-1 items-center">
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 text-xs"
+                        className="h-8 w-8 p-0"
                         onClick={() => setSelectedTransaction(tx)}
                       >
-                        <Eye className="h-3 w-3 mr-1" />
-                        Lihat
+                        <Eye className="h-4 w-4" />
                       </Button>
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => setTransactionToDelete(tx.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </td>
                   </tr>
                 );
@@ -372,6 +494,82 @@ export default function TransactionsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Confirmation Dialogs */}
+      <AlertDialog open={!!transactionToDelete} onOpenChange={(open) => !open && setTransactionToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+               <Trash2 className="h-5 w-5 text-destructive" /> Hapus Transaksi
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin? Data yang dihapus tidak dapat dikembalikan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmSingleDelete} className="bg-destructive hover:bg-destructive/90">
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isBulkDeleteDialogOpen} onOpenChange={setIsBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+               <AlertTriangle className="h-5 w-5 text-destructive" /> Hapus Transaksi Terpilih
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus {selectedIds.size} transaksi yang dipilih? Data yang dihapus tidak dapat dikembalikan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmBulkDelete} className="bg-destructive hover:bg-destructive/90">
+              Hapus Semua Terpilih
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isClearAllDialogOpen} onOpenChange={(open) => {
+        setIsClearAllDialogOpen(open);
+        if (!open) setVerificationText('');
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+               <ShieldAlert className="h-6 w-6" /> RESET DATA TRANSAKSI
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-4">
+              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive font-medium">
+                PERINGATAN: Tindakan ini akan menghapus SELURUH data transaksi di database.
+              </div>
+              <p className="text-sm text-center">
+                Untuk melanjutkan, silakan ketik kata <span className="font-black text-destructive uppercase tracking-widest">HAPUS</span> di bawah ini:
+              </p>
+              <Input 
+                value={verificationText} 
+                onChange={(e) => setVerificationText(e.target.value)}
+                placeholder="Ketik HAPUS untuk konfirmasi"
+                className="font-bold text-center uppercase tracking-widest border-destructive/50 h-10 text-lg"
+              />
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmClearAll} 
+              disabled={verificationText.toUpperCase() !== 'HAPUS'}
+              className="bg-destructive hover:bg-destructive/90 font-bold"
+            >
+              YA, BERSIHKAN SEMUA DATA
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
-}
+}
