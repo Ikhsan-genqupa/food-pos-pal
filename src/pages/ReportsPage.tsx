@@ -153,6 +153,7 @@ export default function ReportsPage() {
         Jumlah: item.quantity,
         Harga: item.price,
         Total: item.total,
+        Sumber: tx.orderSource === 'online' ? 'Online' : 'Offline',
       }));
   });
 
@@ -172,6 +173,11 @@ export default function ReportsPage() {
   const totalOfflineRevenue = filteredTransactions
     .filter(tx => tx.orderSource === 'offline')
     .reduce((sum, tx) => sum + tx.total, 0);
+
+  const orderSourceVolumeData = [
+    { name: 'Online', value: filteredTransactions.filter(tx => tx.orderSource === 'online').length, color: '#3b82f6' },
+    { name: 'Offline', value: filteredTransactions.filter(tx => tx.orderSource === 'offline').length, color: '#10b981' },
+  ].filter(d => d.value > 0);
 
   const outletSummaries = selectedOutlet === 'all' ? Array.from(
     exportData.reduce((acc, row) => {
@@ -282,7 +288,7 @@ export default function ReportsPage() {
   });
 
   const handleExportExcel = () => {
-    const headers = ['Tanggal', 'ID Transaksi', 'Outlet', 'Cabang', 'Produk', 'Metode', 'Jumlah', 'Harga', 'Total'];
+    const headers = ['Tanggal', 'ID Transaksi', 'Outlet', 'Cabang', 'Produk', 'Metode', 'Sumber', 'Jumlah', 'Harga', 'Total'];
     const csvContent = [
       headers.join(','),
       ...exportData.map((row) => headers.map((h) => row[h as keyof typeof row]).join(',')),
@@ -336,6 +342,7 @@ export default function ReportsPage() {
     // Get SVG charts for PDF
     const barChartSvg = document.querySelector('.bar-chart-container svg')?.outerHTML || '';
     const pieChartSvg = document.querySelector('.pie-chart-container svg')?.outerHTML || '';
+    const sourceChartSvg = document.querySelector('.source-chart-container svg')?.outerHTML || '';
     const productLegendHtml = document.querySelector('.pie-legend-container')?.innerHTML || '';
 
     const htmlContent = `
@@ -526,6 +533,12 @@ export default function ReportsPage() {
               </div>
             </div>
           </div>
+          <div class="chart-box">
+            <div class="chart-title">Volume Online vs Offline</div>
+            <div class="chart-container">
+              ${sourceChartSvg}
+            </div>
+          </div>
         </div>
 
         ${selectedOutlet === 'all' ? `
@@ -556,11 +569,12 @@ export default function ReportsPage() {
         <div class="section-title" style="page-break-before: auto;">Detail Transaksi</div>
         <table>
           <thead>
-            <tr class="thead-spacer"><td colspan="8"></td></tr>
+            <tr class="thead-spacer"><td colspan="9"></td></tr>
             <tr>
               <th>Tanggal</th>
               <th>ID Transaksi</th>
               <th>Outlet</th>
+              <th>Sumber</th>
               <th>Metode</th>
               <th>Produk</th>
               <th style="text-align: center;">Jml</th>
@@ -574,6 +588,7 @@ export default function ReportsPage() {
                 <td>${row.Tanggal}</td>
                 <td style="font-family: monospace;">${row['ID Transaksi']}</td>
                 <td>${row.Outlet}</td>
+                <td style="font-weight: 600;">${row.Sumber}</td>
                 <td style="font-weight: 600;">${row.Metode}</td>
                 <td style="color: #4b5563;">${row.Produk}</td>
                 <td style="text-align: center;">${row.Jumlah}</td>
@@ -584,7 +599,7 @@ export default function ReportsPage() {
           </tbody>
           <tfoot style="background-color: #f9fafb;">
             <tr>
-              <td colspan="7" style="text-align: right; padding: 10px 8px; font-weight: 700; font-size: 8px; text-transform: uppercase;">Total Transaksi Terhitung</td>
+              <td colspan="8" style="text-align: right; padding: 10px 8px; font-weight: 700; font-size: 8px; text-transform: uppercase;">Total Transaksi Terhitung</td>
               <td style="text-align: right; padding: 10px 8px; font-weight: 800; font-size: 9px; color: #0d9488; border-top: 2px solid #0d9488;">Rp${totalRevenue.toLocaleString('id-ID')}</td>
             </tr>
           </tfoot>
@@ -784,41 +799,60 @@ export default function ReportsPage() {
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="stat-card text-center border-t-4 border-teal-500">
-          <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Total Pendapatan</p>
-          <p className="text-xl font-black text-teal-600">{formatCurrency(totalRevenue)}</p>
-          <div className="mt-2 pt-2 border-t border-border flex flex-col gap-1">
-            <p className="text-[9px] flex justify-between items-center">
-              <span className="flex items-center gap-1"><Globe className="h-2 w-2 text-blue-500" /> Online:</span>
-              <span className="font-bold text-blue-600">{formatCurrency(totalOnlineRevenue)}</span>
-            </p>
-            <p className="text-[9px] flex justify-between items-center">
-              <span className="flex items-center gap-1"><Store className="h-2 w-2 text-emerald-500" /> Offline:</span>
-              <span className="font-bold text-emerald-600">{formatCurrency(totalOfflineRevenue)}</span>
-            </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div className="stat-card text-center border-t-4 border-teal-500 flex flex-col justify-between">
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Total Pendapatan</p>
+            <p className="text-xl font-black text-teal-600 font-mono">{formatCurrency(totalRevenue)}</p>
           </div>
         </div>
-        <div className="stat-card text-center">
-          <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Total Transaksi</p>
-          <p className="text-xl font-black text-foreground">{totalTransactions}</p>
+        <div className="stat-card text-center border-t-4 border-blue-500 flex flex-col justify-between bg-blue-50/10">
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1 flex items-center justify-center gap-1">
+              <Globe className="h-2.5 w-2.5 text-blue-500" /> Omzet Online
+            </p>
+            <p className="text-xl font-black text-blue-600 font-mono">{formatCurrency(totalOnlineRevenue)}</p>
+          </div>
+          <p className="text-[9px] text-blue-400 mt-1">Via Aplikasi</p>
         </div>
-        <div className="stat-card text-center">
-          <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Rata-rata Transaksi</p>
-          <p className="text-xl font-black text-foreground">{formatCurrency(avgTransaction)}</p>
+        <div className="stat-card text-center border-t-4 border-emerald-500 flex flex-col justify-between bg-emerald-50/10">
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1 flex items-center justify-center gap-1">
+              <Store className="h-2.5 w-2.5 text-emerald-500" /> Omzet Offline
+            </p>
+            <p className="text-xl font-black text-emerald-600 font-mono">{formatCurrency(totalOfflineRevenue)}</p>
+          </div>
+          <p className="text-[9px] text-emerald-400 mt-1">Via Kasir</p>
         </div>
-        <div className="stat-card text-center">
-          <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Pendapatan Harian</p>
-          <p className="text-xl font-black text-teal-600">{formatCurrency(avgDailyRevenue)}</p>
+        <div className="stat-card text-center border-t-4 border-slate-300 flex flex-col justify-between">
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Total Transaksi</p>
+            <p className="text-xl font-black text-slate-700 font-mono">{totalTransactions}</p>
+          </div>
         </div>
-        <div className="stat-card text-center">
-          <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Transaksi Harian</p>
-          <p className="text-xl font-black text-foreground">{avgDailyTransactions.toFixed(1)}</p>
+        <div className="stat-card text-center border-t-4 border-slate-300 flex flex-col justify-between">
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Rata-rata Transaksi</p>
+            <p className="text-[14px] font-black text-slate-700 font-mono">{formatCurrency(avgTransaction)}</p>
+          </div>
+        </div>
+        <div className="stat-card text-center border-t-4 border-teal-400 flex flex-col justify-between">
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Pendapatan Harian</p>
+            <p className="text-[14px] font-black text-teal-600 font-mono">{formatCurrency(avgDailyRevenue)}</p>
+          </div>
         </div>
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-1 gap-4">
+        <div className="stat-card text-center">
+            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Transaksi Harian</p>
+            <p className="text-xl font-black text-foreground">{avgDailyTransactions.toFixed(1)}</p>
+          </div>
+      </div>
+
       {/* Charts Visualization */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Sales chart */}
         <div className="stat-card">
           <h3 className="font-medium text-foreground mb-4">Grafik Penjualan</h3>
@@ -931,6 +965,41 @@ export default function ReportsPage() {
             </div>
           </div>
         </div>
+
+        {/* Order Source Chart */}
+        <div className="stat-card">
+          <h3 className="font-medium text-foreground mb-4">Volume Online vs Offline</h3>
+          <div className="h-56 source-chart-container">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={orderSourceVolumeData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={70}
+                  paddingAngle={5}
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {orderSourceVolumeData.map((entry, index) => (
+                    <Cell key={index} fill={entry.color} />
+                  ))}
+                </Pie>
+                <ChartTooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="mt-4 flex justify-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <div className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+              <span className="text-[10px] font-medium">Online</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+              <span className="text-[10px] font-medium">Offline</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Outlet Performance Summary (Visible for admin when all outlets selected) */}
@@ -968,6 +1037,7 @@ export default function ReportsPage() {
               <tr className="border-b border-border bg-muted/50">
                 <th className="text-left py-2.5 px-4 text-[10px] font-bold text-muted-foreground whitespace-nowrap uppercase tracking-wider">Tanggal</th>
                 <th className="text-left py-2.5 px-4 text-[10px] font-bold text-muted-foreground whitespace-nowrap uppercase tracking-wider">ID Transaksi</th>
+                <th className="text-center py-2.5 px-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Sumber</th>
                 <th className="text-left py-2.5 px-4 text-[10px] font-bold text-muted-foreground whitespace-nowrap uppercase tracking-wider">Metode</th>
                 <th className="text-left py-2.5 px-4 text-[10px] font-bold text-muted-foreground whitespace-nowrap uppercase tracking-wider">Outlet</th>
                 <th className="text-left py-2.5 px-4 text-[10px] font-bold text-muted-foreground whitespace-nowrap uppercase tracking-wider">Produk</th>
@@ -981,6 +1051,17 @@ export default function ReportsPage() {
                 <tr key={idx} className="border-b border-border/50 hover:bg-muted/30">
                   <td className="py-2.5 px-4 text-[10px] whitespace-nowrap">{row.Tanggal}</td>
                   <td className="py-2.5 px-4 text-[10px] font-mono text-muted-foreground">{row['ID Transaksi']}</td>
+                  <td className="py-2.5 px-4 text-[10px] text-center">
+                    {row.Sumber === 'Online' ? (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold text-[9px]">
+                        <Globe className="h-2.5 w-2.5" /> ONLINE
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-bold text-[9px]">
+                        <Store className="h-2.5 w-2.5" /> OFFLINE
+                      </span>
+                    )}
+                  </td>
                   <td className="py-2.5 px-4 text-[10px] font-bold text-teal-600 uppercase">{row.Metode}</td>
                   <td className="py-2.5 px-4 text-[10px] truncate max-w-[120px]">{row.Outlet}</td>
                   <td className="py-2.5 px-4 text-[10px] font-medium">{row.Produk}</td>
@@ -993,7 +1074,7 @@ export default function ReportsPage() {
             {exportData.length > 0 && (
               <tfoot className="bg-muted/30 font-black">
                 <tr>
-                  <td colSpan={7} className="py-3 px-4 text-right text-[11px] uppercase tracking-widest text-muted-foreground">Total Terhitung</td>
+                  <td colSpan={8} className="py-3 px-4 text-right text-[11px] uppercase tracking-widest text-muted-foreground">Total Terhitung</td>
                   <td className="py-3 px-4 text-right text-[12px] text-teal-700 whitespace-nowrap">{formatCurrency(totalRevenue)}</td>
                 </tr>
               </tfoot>
