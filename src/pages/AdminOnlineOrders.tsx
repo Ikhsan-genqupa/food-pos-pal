@@ -209,7 +209,7 @@ export default function AdminOnlineOrders() {
                     <Phone className="h-3 w-3" /> {order.customerPhone}
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground font-bold">
-                    <Clock className="h-4 w-4 text-primary" /> {order.pickupTime ? new Date(order.pickupTime).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short', year: 'numeric', hourCycle: 'h23' }) + ' WIB' : '-'}
+                    <Clock className="h-4 w-4 text-primary" /> {order.pickupTime ? new Intl.DateTimeFormat('id-ID', { dateStyle: 'full', timeStyle: 'short', timeZone: 'Asia/Jakarta' }).format(new Date(order.pickupTime)) + ' WIB' : '-'}
                   </div>
                 </div>
               </CardContent>
