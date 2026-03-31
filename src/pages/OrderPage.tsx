@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useActiveProducts } from '@/hooks/useProducts';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCategories } from '@/hooks/useCategories';
 import { useActiveOutlets } from '@/hooks/useOutlets';
 import { useCreateTransaction } from '@/hooks/useTransactions';
@@ -67,8 +67,7 @@ export default function OrderPage() {
   const [customerPhone, setCustomerPhone] = useState('');
   const [selectedOutlet, setSelectedOutlet] = useState('');
   const [pickupTime, setPickupTime] = useState('');
-  const [paymentProof, setPaymentProof] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const navigate = useNavigate();
 
   const filteredProducts = products.filter((product) => {
     const matchesCategory = !selectedCategory || product.categoryId === selectedCategory;
@@ -89,33 +88,13 @@ export default function OrderPage() {
       return;
     }
 
-    if (!paymentProof) {
-      toast({ title: "Bukti Transfer Wajib", description: "Silakan unggah foto bukti transfer Anda", variant: "destructive" });
-      return;
-    }
-
     try {
-      setIsUploading(true);
-      
-      // 1. Upload Payment Proof
-      const fileExt = paymentProof.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage
-        .from('payment_proofs')
-        .upload(fileName, paymentProof);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('payment_proofs')
-        .getPublicUrl(fileName);
-
-      // 2. Create Transaction
+      // Create Transaction
       const today = new Date();
       const [hours, minutes] = pickupTime.split(':');
       const pickupDate = new Date(today.setHours(parseInt(hours), parseInt(minutes), 0, 0));
 
-      await createTransaction.mutateAsync({
+      const transaction = await createTransaction.mutateAsync({
         outletId: selectedOutlet,
         items: items.map(item => ({
           productId: item.product.id,
@@ -126,7 +105,7 @@ export default function OrderPage() {
         })),
         subtotal: total,
         total: total,
-        paymentMethod: 'dana', // Default for BOPIS (non-tunai as per user request)
+        paymentMethod: 'dana',
         cashReceived: 0,
         change: 0,
         orderType: 'bopis',
@@ -134,15 +113,12 @@ export default function OrderPage() {
         customerPhone: customerPhone,
         pickupTime: pickupDate,
         status: 'awaiting_payment',
-        paymentProofUrl: publicUrl
       });
 
-      setIsUploading(false);
       clearCart();
       setCheckoutOpen(false);
-      setSuccessOpen(true);
+      navigate(`/payment/${transaction.id}`);
     } catch (error: any) {
-      setIsUploading(false);
       toast({ title: "Gagal", description: error.message, variant: "destructive" });
     }
   };
@@ -357,42 +333,6 @@ export default function OrderPage() {
               </div>
             </div>
 
-            <div className="space-y-3">
-              <Label htmlFor="proof" className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2 px-1">
-                <ImagePlus className="h-3 w-3 text-primary" /> Bukti Transfer (Mandatori)
-              </Label>
-              <div className="relative">
-                <Input 
-                  id="proof" 
-                  type="file" 
-                  accept="image/*"
-                  required 
-                  onChange={(e) => setPaymentProof(e.target.files ? e.target.files[0] : null)}
-                  className="hidden"
-                />
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className={cn(
-                    "w-full h-20 rounded-2xl border-2 border-dashed flex flex-col gap-1 transition-all",
-                    paymentProof ? "border-green-500 bg-green-50" : "border-border hover:border-primary/50"
-                  )}
-                  onClick={() => document.getElementById('proof')?.click()}
-                >
-                  {paymentProof ? (
-                    <>
-                      <CheckCircle2 className="h-5 w-5 text-green-600" />
-                      <span className="text-xs font-bold text-green-700">{paymentProof.name}</span>
-                    </>
-                  ) : (
-                    <>
-                      <ImagePlus className="h-6 w-6 text-muted-foreground/50" />
-                      <span className="text-xs font-bold text-muted-foreground">Klik untuk Unggah Foto Bukti Transfer</span>
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
 
             <div className="bg-muted/30 rounded-[2rem] p-6 border-2 border-dashed border-border/50">
                <div className="flex justify-between items-center mb-6">
@@ -439,41 +379,14 @@ export default function OrderPage() {
               <Button type="button" variant="ghost" onClick={() => setCheckoutOpen(false)} className="rounded-2xl h-14 px-8 font-black uppercase tracking-widest text-muted-foreground hover:bg-muted">
                 Kembali
               </Button>
-              <Button type="submit" disabled={createTransaction.isPending || isUploading} className="flex-1 rounded-2xl h-14 font-black uppercase tracking-[0.2em] text-lg shadow-2xl shadow-primary/30 active:scale-95 transition-all">
-                {createTransaction.isPending || isUploading ? "Mengirim..." : "Pesan Sekarang"}
+              <Button type="submit" disabled={createTransaction.isPending} className="flex-1 rounded-2xl h-14 font-black uppercase tracking-[0.2em] text-lg shadow-2xl shadow-primary/30 active:scale-95 transition-all">
+                {createTransaction.isPending ? "Mengirim..." : "Pesan Sekarang"}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* Success Dialog */}
-      <Dialog open={successOpen} onOpenChange={setSuccessOpen}>
-        <DialogContent className="sm:max-w-[450px] text-center p-0 rounded-[3rem] overflow-hidden border-none shadow-[0_50px_100px_-20px_rgba(34,197,94,0.3)]">
-          <div className="bg-green-500 p-12 relative overflow-hidden">
-            <div className="relative z-10 animate-in zoom-in-50 duration-700">
-              <div className="bg-white text-green-500 rounded-[2rem] w-24 h-24 flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-black/20">
-                 <CheckCircle2 className="h-14 w-14" />
-              </div>
-              <h2 className="text-4xl font-black text-white tracking-tight">SIAP, TERKIRIM!</h2>
-            </div>
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.4),transparent)]"></div>
-          </div>
-          <div className="p-10 bg-white">
-            <p className="text-xl font-bold text-muted-foreground leading-relaxed">
-              Pesanan Anda sudah diamankan! Silakan mampir ke outlet <span className="text-primary underline">sesuai jadwal</span> pengambilan ya. 
-            </p>
-            <div className="mt-10">
-              <Button 
-                className="w-full rounded-2xl h-16 font-black uppercase tracking-[0.2em] bg-green-500 hover:bg-green-600 shadow-xl shadow-green-200 active:scale-95 transition-all text-lg" 
-                onClick={() => setSuccessOpen(false)}
-              >
-                SIAPP, MENGERTI!
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Footer / Staff Login */}
       <footer className="mt-20 py-10 border-t border-border/40 text-center">

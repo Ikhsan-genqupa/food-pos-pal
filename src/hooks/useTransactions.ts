@@ -255,3 +255,125 @@ export function useUpdateTransactionStatus() {
     },
   });
 }
+export function useTransaction(id?: string) {
+  return useQuery({
+    queryKey: ['transaction', id],
+    queryFn: async (): Promise<Transaction | null> => {
+      if (!id) return null;
+
+      const { data, error } = await supabase
+        .from('transactions')
+        .select(`
+          *,
+          outlets (
+            id,
+            name,
+            branch_number
+          ),
+          transaction_items (
+            id,
+            product_id,
+            product_name,
+            quantity,
+            price,
+            total
+          )
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      if (!data) return null;
+
+      return {
+        id: data.id,
+        transactionNumber: data.transaction_number,
+        outletId: data.outlet_id || '',
+        outlet: data.outlets ? {
+          id: data.outlets.id,
+          name: data.outlets.name,
+          branchNumber: data.outlets.branch_number,
+          address: '',
+          personInCharge: '',
+          username: '',
+          createdAt: new Date(),
+          isActive: true,
+        } : undefined,
+        items: data.transaction_items.map((item: any) => ({
+          productId: item.product_id || '',
+          productName: item.product_name,
+          quantity: item.quantity,
+          price: item.price,
+          total: item.total,
+        })),
+        subtotal: Number(data.subtotal),
+        total: Number(data.total),
+        paymentMethod: data.payment_method as PaymentMethod,
+        cashReceived: Number(data.cash_received),
+        change: Number(data.change_amount),
+        cashierName: data.cashier_name,
+        orderType: data.order_type as 'dine-in' | 'takeaway' | 'bopis',
+        customerName: data.customer_name,
+        customerPhone: data.customer_phone,
+        pickupTime: data.pickup_time ? new Date(data.pickup_time) : undefined,
+        status: (data.status as any) || 'completed',
+        paymentProofUrl: data.payment_proof_url,
+        createdAt: new Date(data.created_at),
+      };
+    },
+    enabled: !!id,
+  });
+}
+
+export function useUploadPaymentProof() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, file }: { id: string, file: File }) => {
+      // 1. Upload to storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('payment_proofs')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('payment_proofs')
+        .getPublicUrl(fileName);
+
+      // 2. Update transaction
+      const { data, error } = await supabase
+        .from('transactions')
+        .update({ 
+          payment_proof_url: publicUrl,
+          // Optionally update status to something like 'payment_review' 
+          // or keep as 'awaiting_payment' until admin verifies.
+          // User said: "simpan ke bucket payment_proofs dan update baris data transaksi tersebut (isi kolom payment_proof_url)."
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['transaction', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      toast({
+        title: 'Berhasil',
+        description: 'Bukti pembayaran berhasil diunggah',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
