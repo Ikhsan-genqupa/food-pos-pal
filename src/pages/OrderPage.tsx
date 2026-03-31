@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useActiveProducts } from '@/hooks/useProducts';
+import { Link } from 'react-router-dom';
 import { useCategories } from '@/hooks/useCategories';
 import { useActiveOutlets } from '@/hooks/useOutlets';
 import { useCreateTransaction } from '@/hooks/useTransactions';
@@ -473,6 +474,16 @@ export default function OrderPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Footer / Staff Login */}
+      <footer className="mt-20 py-10 border-t border-border/40 text-center">
+        <p className="text-muted-foreground text-xs font-medium uppercase tracking-[0.2em] mb-2">
+          © {new Date().getFullYear()} GenQuPa Food Pal. All rights reserved.
+        </p>
+        <Link to="/login" className="text-[10px] text-muted-foreground/30 hover:text-primary transition-colors font-bold uppercase tracking-widest">
+          Staff Login
+        </Link>
+      </footer>
     </div>
   );
 }

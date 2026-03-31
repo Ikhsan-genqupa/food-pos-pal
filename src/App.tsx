@@ -32,9 +32,9 @@ const App = () => (
             <Sonner />
             <Routes>
               <Route path="/login" element={<LoginPage />} />
-              <Route path="/order" element={<OrderPage />} />
-              <Route path="/menu" element={<Navigate to="/order" replace />} />
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/" element={<OrderPage />} />
+              <Route path="/order" element={<Navigate to="/" replace />} />
+              <Route path="/menu" element={<Navigate to="/" replace />} />
               <Route element={<DashboardLayout />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/pos" element={<POSPage />} />
