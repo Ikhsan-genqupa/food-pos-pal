@@ -6,8 +6,10 @@ interface NotificationContextType {
   pendingVerificationCount: number;
   lastNewOrder: any | null;
   lastVerifiedOrder: any | null;
+  lastUploadOrder: any | null;
   setLastNewOrder: (order: any | null) => void;
   setLastVerifiedOrder: (order: any | null) => void;
+  setLastUploadOrder: (order: any | null) => void;
   refreshPendingCount: () => Promise<void>;
 }
 
@@ -18,6 +20,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [pendingVerificationCount, setPendingVerificationCount] = useState(0);
   const [lastNewOrder, setLastNewOrder] = useState<any | null>(null);
   const [lastVerifiedOrder, setLastVerifiedOrder] = useState<any | null>(null);
+  const [lastUploadOrder, setLastUploadOrder] = useState<any | null>(null);
 
   const fetchPendingCount = async () => {
     if (!user) return;
@@ -80,6 +83,15 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
                 }
               }
             }
+
+            // Stage 2: Handle Payment Proof Upload (transition from null to non-null)
+            if (newOrder.payment_proof_url && !oldOrder.payment_proof_url) {
+              if (user.role === 'admin') {
+                if (user.role === 'admin' || user.outletId === newOrder.outlet_id) {
+                   setLastUploadOrder(newOrder);
+                }
+              }
+            }
             fetchPendingCount();
           }
 
@@ -101,8 +113,10 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         pendingVerificationCount,
         lastNewOrder,
         lastVerifiedOrder,
+        lastUploadOrder,
         setLastNewOrder,
         setLastVerifiedOrder,
+        setLastUploadOrder,
         refreshPendingCount: fetchPendingCount,
       }}
     >

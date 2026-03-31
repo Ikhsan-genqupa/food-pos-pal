@@ -54,6 +54,11 @@ export const NotificationListener: React.FC = () => {
           if (newOrder.status === 'verified' && oldOrder.status !== 'verified') {
             handleOrderVerified(newOrder);
           }
+
+          // If proof uploaded (transition null -> non-null)
+          if (newOrder.payment_proof_url && !oldOrder.payment_proof_url) {
+            handleProofUploaded(newOrder);
+          }
         }
       )
       .subscribe();
@@ -67,7 +72,28 @@ export const NotificationListener: React.FC = () => {
     // Stage 1: Only for Admin
     if (user?.role !== 'admin') return;
 
-    // 1. Play sound
+    // 1. SILENT for Stage 1 (as requested, only Stage 2 has sound)
+    
+    // 2. Show Toast
+    toast.info('ADA PESANAN BARU!', {
+      description: `${order.customer_name || 'Pelanggan'} • ${formatCurrency(order.total)}`,
+      icon: <ShoppingBag className="h-5 w-5 text-slate-500" />,
+      duration: 8000,
+      className: "bg-slate-50 border-slate-200 text-slate-800",
+      action: {
+        label: 'Lihat Detail',
+        onClick: () => {
+          window.location.href = '/verify-payments';
+        },
+      },
+    });
+  };
+
+  const handleProofUploaded = (order: any) => {
+    // Stage 2: Admin only
+    if (user?.role !== 'admin') return;
+
+    // 1. Play sound (Ting)
     if (isSoundEnabled && audioRef.current) {
       audioRef.current.play().catch(err => {
         console.error('Audio playback failed:', err);
@@ -75,13 +101,13 @@ export const NotificationListener: React.FC = () => {
     }
 
     // 2. Show Toast
-    toast.success('ADA PESANAN BARU!', {
-      description: `Perlu Verifikasi - ${order.customer_name || 'Pelanggan'} • ${formatCurrency(order.total)}`,
-      icon: <ShoppingBag className="h-5 w-5 text-orange-500" />,
-      duration: 8000,
-      className: "bg-orange-50 border-orange-200",
+    toast.success('SUDAH UPLOAD BUKTI TF!', {
+      description: `Perlu Verifikasi Pembayaran - ${order.customer_name || 'Pelanggan'}`,
+      icon: <Bell className="h-5 w-5 text-orange-600" />,
+      duration: 10000,
+      className: "bg-orange-600 text-white border-orange-400",
       action: {
-        label: 'Lihat Detail',
+        label: 'Verifikasi Sekarang',
         onClick: () => {
           window.location.href = '/verify-payments';
         },
