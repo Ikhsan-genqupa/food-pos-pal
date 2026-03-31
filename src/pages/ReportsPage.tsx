@@ -392,27 +392,32 @@ export default function ReportsPage() {
           
           .charts-grid {
             display: flex;
-            gap: 20px;
-            margin-bottom: 10mm;
+            gap: 8px;
+            margin-bottom: 25px;
+            align-items: stretch;
           }
           .chart-box {
             flex: 1;
             border: 1px solid #f3f4f6;
             border-radius: 12px;
-            padding: 15px;
+            padding: 8px;
             background: white;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
           }
           .chart-title {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 700;
-            margin-bottom: 10px;
-            color: #374151;
+            margin-bottom: 5px;
+            color: #111827;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            text-align: center;
           }
           .chart-container {
             width: 100%;
-            height: 180px;
+            height: 250px;
           }
           .chart-container svg {
             width: 100%;
@@ -421,13 +426,22 @@ export default function ReportsPage() {
           .legend-item {
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 8px;
-            margin-bottom: 3px;
+            gap: 4px;
+            font-size: 7px;
+            margin-bottom: 1px;
+            color: #111827 !important;
+            font-weight: 600;
+          }
+          .pie-legend-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px 20px;
+            width: 100%;
           }
           .legend-color {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
           }
           
@@ -438,7 +452,7 @@ export default function ReportsPage() {
             background-color: #0d9488; 
             color: white; 
             text-align: left; 
-            padding: 8px 10px; 
+            padding: 4px 10px; 
             font-size: 8.5px; 
             font-weight: 700;
             text-transform: uppercase;
@@ -446,12 +460,13 @@ export default function ReportsPage() {
             white-space: nowrap;
           }
           td { 
-            padding: 7px 10px; 
+            padding: 4px 10px; 
             border-bottom: 1px solid #f3f4f6; 
             font-size: 8.5px; 
             color: #374151;
             white-space: nowrap;
           }
+          tr { page-break-inside: avoid; }
           tr:last-child td { border-bottom: none; }
           tr:nth-child(even) { background-color: #fcfcfc; }
           
@@ -473,22 +488,23 @@ export default function ReportsPage() {
             height: 45px;
             font-size: 9px; 
             color: #9ca3af; 
-            background: white;
+            background: transparent;
             padding: 10px 30px;
             border-top: 1px solid #f3f4f6;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            z-index: 100;
+            z-index: -1;
           }
+          body { padding-bottom: 100px; }
           .footer-left { text-align: left; }
           .footer-right { text-align: right; }
           .page-number:after { 
-            counter-increment: page;
-            content: counter(page); 
+            content: "hal " counter(page); 
           }
           
           @media print {
+            @page { margin: 10mm; }
             body { padding-top: 0; }
             .summary-container { -webkit-print-color-adjust: exact; background-color: #f9fafb !important; }
             th { -webkit-print-color-adjust: exact; background-color: #0d9488 !important; color: white !important; }
@@ -524,31 +540,41 @@ export default function ReportsPage() {
           <div class="chart-box">
             <div class="chart-title">Tren Penjualan</div>
             <div class="chart-container">
-              ${barChartSvg}
+              ${barChartSvg.replace(/height="[^"]*"/, 'height="100%"').replace(/width="[^"]*"/, 'width="100%"')}
             </div>
           </div>
           <div class="chart-box">
             <div class="chart-title">Proporsi Produk</div>
-            <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
               <div class="chart-container" style="flex: 1;">
-                ${pieChartSvg}
+                ${pieChartSvg.replace(/outerRadius="[^"]*"/g, 'outerRadius="90"').replace(/innerRadius="[^"]*"/g, 'innerRadius="65"').replace(/width="[^"]*"/, 'width="100%"').replace(/height="[^"]*"/, 'height="100%"')}
               </div>
-              <div style="flex: 1; max-height: 180px; overflow: hidden;">
-                ${productLegendHtml}
+              <div style="width: 100%; margin-top: 15px; display: flex; justify-content: center;">
+                <div class="pie-legend-grid">
+                  ${productLegendHtml.replace(/\s*[·•]\s*Rp[\s\d.,]+/g, '').replace(/last:border-0/g, '').replace(/truncate/g, '').replace(/border-b|py-1|gap-2/g, '').replace(/<p class="text-\[9px\].*?<\/p>/g, '').replace(/(\d+ terjual)/g, ' - $1').replace(/<span>(.*?)<\/span>/g, ' ($1)').replace(/text-muted-foreground/g, '')}
+                </div>
               </div>
             </div>
           </div>
           <div class="chart-box">
             <div class="chart-title">Volume Online vs Offline</div>
-            <div class="chart-container">
-              ${sourceChartSvg}
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+              <div class="chart-container" style="flex: 1;">
+                ${sourceChartSvg.replace(/outerRadius="[^"]*"/g, 'outerRadius="90"').replace(/width="[^"]*"/, 'width="100%"').replace(/height="[^"]*"/, 'height="100%"')}
+              </div>
+              <div style="width: 100%; margin-top: 15px;">
+                <div class="pie-legend-grid">
+                  <div class="legend-item"><div class="legend-color" style="background: #3b82f6;"></div>Online &middot; ${totalOnlineRevenue > 0 ? Math.round((totalOnlineRevenue / totalRevenue) * 100) : 0}%</div>
+                  <div class="legend-item"><div class="legend-color" style="background: #10b981;"></div>Offline &middot; ${totalOfflineRevenue > 0 ? Math.round((totalOfflineRevenue / totalRevenue) * 100) : 0}%</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         ${selectedOutlet === 'all' ? `
           <div class="section-title">Ringkasan Per Outlet</div>
-          <table style="margin-bottom: 25px;">
+          <table style="margin-bottom: 40px;">
             <thead>
               <tr class="thead-spacer"><td colspan="4"></td></tr>
               <tr>
@@ -571,7 +597,7 @@ export default function ReportsPage() {
           </table>
         ` : ''}
 
-        <div class="section-title" style="page-break-before: auto;">Detail Transaksi</div>
+        <div class="section-title" style="page-break-before: auto; margin-top: 20px;">Detail Transaksi</div>
         <table>
           <thead>
             <tr class="thead-spacer"><td colspan="9"></td></tr>
@@ -859,19 +885,23 @@ export default function ReportsPage() {
       {/* Charts Visualization */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Sales chart */}
-        <div className="stat-card">
+        <div className="stat-card flex flex-col h-full bg-white dark:bg-card border border-border shadow-sm">
           <h3 className="font-medium text-foreground mb-4">Grafik Penjualan</h3>
-          <div className="h-56 bar-chart-container">
+          <div className="h-[300px] bar-chart-container flex-1 flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={sortedDailyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <BarChart data={sortedDailyData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
                 <XAxis
                   dataKey="date"
                   tick={{ fill: '#6b7280', fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
                 />
                 <YAxis
                   tick={{ fill: '#6b7280', fontSize: 10 }}
                   tickFormatter={(value) => `${value / 1000}K`}
+                  axisLine={false}
+                  tickLine={false}
                 />
                 <ChartTooltip
                   contentStyle={{
@@ -918,20 +948,21 @@ export default function ReportsPage() {
         </div>
 
         {/* Product chart */}
-        <div className="stat-card">
-          <h3 className="font-medium text-foreground mb-4">Penjualan per Produk</h3>
-          <div className="flex flex-col sm:flex-row items-center gap-4 min-h-[224px]">
-            <div className="w-full sm:w-1/2 h-56 pie-chart-container">
+        <div className="stat-card flex flex-col h-full bg-white dark:bg-card border border-border shadow-sm">
+          <h3 className="font-medium text-foreground mb-4 font-bold text-sm uppercase tracking-wider">Proporsi Produk</h3>
+          <div className="flex flex-col items-center flex-1 justify-center">
+            <div className="w-full h-[300px] pie-chart-container">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={productData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={50}
-                    outerRadius={70}
+                    innerRadius={65}
+                    outerRadius={90}
                     paddingAngle={2}
                     dataKey="value"
+                    stroke="none"
                   >
                     {productData.map((entry, index) => (
                       <Cell key={index} fill={entry.color} />
@@ -949,59 +980,61 @@ export default function ReportsPage() {
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <div className="w-full sm:w-1/2 space-y-1.5 max-h-56 overflow-y-auto pr-2 pie-legend-container custom-scrollbar">
-              {productData.map((item) => (
-                <div key={item.name} className="legend-item flex items-center gap-2 py-1 border-b border-border/30 last:border-0">
-                  <div
-                    className="legend-color h-2 w-2 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-muted-foreground font-medium truncate text-[10px] leading-tight">{item.name}</p>
-                    <p className="text-[9px] text-muted-foreground">
-                      {item.quantity} terjual · {formatCurrency(item.value)}
-                    </p>
+            <div className="w-full mt-4">
+              <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 px-4 pb-2">
+                {productData.map((item) => (
+                  <div key={item.name} className="legend-item flex items-center gap-1.5 whitespace-nowrap">
+                    <div
+                      className="legend-color h-2 w-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className="text-[10px] font-medium text-muted-foreground">
+                      {item.name} - {item.quantity} terjual ({totalProductSales > 0 ? Math.round((item.value / totalProductSales) * 100) : 0}%)
+                    </span>
                   </div>
-                  <span className="font-bold text-foreground text-[10px] tabular-nums">
-                    {totalProductSales > 0 ? Math.round((item.value / totalProductSales) * 100) : 0}%
-                  </span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Order Source Chart */}
-        <div className="stat-card">
-          <h3 className="font-medium text-foreground mb-4">Volume Online vs Offline</h3>
-          <div className="h-56 source-chart-container">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={orderSourceVolumeData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={70}
-                  paddingAngle={5}
-                  dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                >
-                  {orderSourceVolumeData.map((entry, index) => (
-                    <Cell key={index} fill={entry.color} />
-                  ))}
-                </Pie>
-                <ChartTooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-4 flex justify-center gap-4">
-            <div className="flex items-center gap-1.5">
-              <div className="h-2.5 w-2.5 rounded-full bg-blue-500" />
-              <span className="text-[10px] font-medium">Online</span>
+        <div className="stat-card flex flex-col h-full bg-white dark:bg-card border border-border shadow-sm">
+          <h3 className="font-medium text-foreground mb-4 font-bold text-sm uppercase tracking-wider">Volume Online vs Offline</h3>
+          <div className="flex flex-col items-center flex-1 justify-center">
+            <div className="w-full h-[300px] source-chart-container">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={orderSourceVolumeData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={90}
+                    paddingAngle={5}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {orderSourceVolumeData.map((entry, index) => (
+                      <Cell key={index} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <ChartTooltip />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-              <span className="text-[10px] font-medium">Offline</span>
+            <div className="w-full mt-4">
+              <div className="flex flex-wrap justify-center gap-x-8 px-4 pb-2">
+                {orderSourceVolumeData.map((item) => {
+                  const total = orderSourceVolumeData.reduce((acc, curr) => acc + curr.value, 0);
+                  const percentage = total > 0 ? Math.round((item.value / total) * 100) : 0;
+                  return (
+                    <div key={item.name} className="flex items-center gap-2">
+                      <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                      <span className="text-[10px] font-medium text-muted-foreground">{item.name} - {percentage}%</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>

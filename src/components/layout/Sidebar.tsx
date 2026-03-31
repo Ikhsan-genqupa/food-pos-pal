@@ -29,6 +29,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const { pendingVerificationCount } = useNotifications();
 
   const adminLinks = [
+    { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/verify-payments', icon: ShieldCheck, label: 'Verifikasi Pembayaran' },
     { to: '/online-orders', icon: ShoppingBag, label: 'Pesanan Online' },
     { to: '/outlets', icon: Store, label: 'Manajemen Outlet' },

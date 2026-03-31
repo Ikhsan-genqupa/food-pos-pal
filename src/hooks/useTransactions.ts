@@ -267,36 +267,130 @@ export function useVerifyOnlineOrder() {
       const outletId = order.outletId || order.outlet_id;
       const transactionId = order.id;
 
-      console.log(`[VERIFY] Memulai verifikasi transaksi: ${transactionId} di Outlet: ${outletId}`);
+      console.log("LOG: Proses potong stok dimulai untuk transaksi:", transactionId);
 
-      // 1. Panggil RPC (Stored Procedure) di Database untuk Atomicity
-      const { data, error } = await (supabase.rpc as any)('handle_order_verification', {
-        p_transaction_id: transactionId,
-        p_outlet_id: outletId
-      });
+      // 1. Ambil data item transaksi yang paling fresh
+      const { data: items, error: itemsError } = await supabase
+        .from('transaction_items')
+        .select('*')
+        .eq('transaction_id', transactionId);
 
-      if (error) {
-        console.error('[VERIFY] RPC Error:', error);
-        throw error;
+      if (itemsError) throw itemsError;
+      if (!items || items.length === 0) throw new Error('Pesanan tidak memiliki item.');
+
+      // 2. Validasi Stok Terlebih Dahulu (Dry Run)
+      for (const item of items) {
+        if (!item.product_id) continue;
+
+        // Cek apakah produk adalah Bundle
+        const { data: product } = await supabase
+          .from('products')
+          .select('id, name, is_bundle, bundle_items')
+          .eq('id', item.product_id)
+          .single();
+
+        if (product?.is_bundle && Array.isArray(product.bundle_items)) {
+          const bundleItems = product.bundle_items as { productId: string; quantity: number }[];
+          for (const bi of bundleItems) {
+            const { data: stock } = await supabase
+              .from('stocks')
+              .select('quantity')
+              .eq('product_id', bi.productId)
+              .eq('outlet_id', outletId)
+              .maybeSingle();
+
+            const currentStock = stock?.quantity || 0;
+            const needed = bi.quantity * item.quantity;
+            if (currentStock < needed) {
+              throw new Error("Stok tidak mencukupi di outlet ini!");
+            }
+          }
+        } else {
+          const { data: stock } = await supabase
+            .from('stocks')
+            .select('quantity')
+            .eq('product_id', item.product_id)
+            .eq('outlet_id', outletId)
+            .maybeSingle();
+
+          const currentStock = stock?.quantity || 0;
+          if (currentStock < item.quantity) {
+            throw new Error("Stok tidak mencukupi di outlet ini!");
+          }
+        }
       }
 
-      const result = data as { success: boolean; error?: string };
+      // 3. Eksekusi Pemotongan Stok
+      for (const item of items) {
+        if (!item.product_id) continue;
 
-      if (!result || result.success === false) {
-        console.warn('[VERIFY] Gagal Verifikasi:', result?.error || 'Gagal tanpa pesan error');
-        throw new Error(result?.error || 'Gagal melakukan verifikasi stok.');
+        const { data: product } = await supabase
+          .from('products')
+          .select('is_bundle, bundle_items, name')
+          .eq('id', item.product_id)
+          .single();
+
+        if (product?.is_bundle && Array.isArray(product.bundle_items)) {
+          const bundleItems = product.bundle_items as { productId: string; quantity: number }[];
+          for (const bi of bundleItems) {
+            const { data: stock } = await supabase
+              .from('stocks')
+              .select('id, quantity')
+              .eq('product_id', bi.productId)
+              .eq('outlet_id', outletId)
+              .single();
+
+            const deduction = bi.quantity * item.quantity;
+            await supabase
+              .from('stocks')
+              .update({ quantity: Math.max(0, stock.quantity - deduction) })
+              .eq('id', stock.id);
+            
+            console.log(`Berhasil memotong stok untuk Komponen Paket (Produk ID: ${bi.productId}) sebanyak ${deduction} di Outlet ${outletId}`);
+          }
+        } else {
+          const { data: stock } = await supabase
+            .from('stocks')
+            .select('id, quantity')
+            .eq('product_id', item.product_id)
+            .eq('outlet_id', outletId)
+            .single();
+
+          await supabase
+            .from('stocks')
+            .update({ quantity: Math.max(0, stock.quantity - item.quantity) })
+            .eq('id', stock.id);
+          
+          console.log(`Berhasil memotong stok untuk Produk ${product?.name} sebanyak ${item.quantity} di Outlet ${outletId}`);
+        }
       }
 
-      // 2. Logging sukses (Sesuai instruksi)
-      order.items.forEach((item: any) => {
-        console.log(`Berhasil memotong stok untuk Produk ${item.productName} sebanyak ${item.quantity} di Outlet ${outletId}`);
-      });
+      // 4. Update Status Transaksi
+      const { data: updated, error: statusError } = await supabase
+        .from('transactions')
+        .update({ status: 'verified' })
+        .eq('id', transactionId)
+        .select()
+        .single();
 
-      return data;
+      if (statusError) throw statusError;
+
+      return updated;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['stocks'] });
+      toast({
+        title: "Berhasil",
+        description: "Pembayaran Diverifikasi & Stok Terupdate!",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Gagal Verifikasi",
+        description: error.message || "Stok tidak mencukupi di outlet ini!",
+        variant: "destructive",
+      });
     }
   });
 }
