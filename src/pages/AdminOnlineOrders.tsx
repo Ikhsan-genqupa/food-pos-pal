@@ -62,6 +62,20 @@ export default function AdminOnlineOrders() {
     };
   }, [refetch]);
 
+  const getPaymentLabel = (method: string | undefined | null) => {
+    switch (method) {
+      case 'tunai': return 'Tunai';
+      case 'qris': return 'QRIS';
+      case 'ovo': return 'OVO';
+      case 'gopay': return 'GoPay';
+      case 'dana': return 'Dana';
+      case 'debit': return 'Debit';
+      case 'kredit': return 'Kredit';
+      case 'transfer': return 'TF Bank';
+      default: return method || '-';
+    }
+  };
+
   const handleVerify = async (order: any) => {
     try {
       setIsVerifying(order.id);
@@ -140,7 +154,12 @@ export default function AdminOnlineOrders() {
               <CardHeader className="bg-orange-50/50 pb-4">
                 <div className="flex justify-between items-start mb-2">
                   <span className="text-[10px] font-mono font-bold text-muted-foreground">{order.transactionNumber}</span>
-                  <Badge variant="destructive" className="animate-pulse">Awaiting Payment</Badge>
+                  <div className="flex flex-col items-end gap-1">
+                    <Badge variant="destructive" className="animate-pulse">Awaiting Payment</Badge>
+                    <Badge variant="outline" className="text-[9px] border-primary/20 text-primary font-black py-0 h-4 px-1.5 bg-primary/5 uppercase">
+                      {getPaymentLabel(order.paymentMethod)}
+                    </Badge>
+                  </div>
                 </div>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <User className="h-4 w-4 text-primary" />

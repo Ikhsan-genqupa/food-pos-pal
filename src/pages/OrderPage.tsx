@@ -105,7 +105,7 @@ export default function OrderPage() {
         })),
         subtotal: total,
         total: total,
-        paymentMethod: 'dana',
+        paymentMethod: 'transfer',
         cashReceived: 0,
         change: 0,
         orderType: 'bopis',

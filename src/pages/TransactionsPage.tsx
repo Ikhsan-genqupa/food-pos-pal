@@ -176,6 +176,7 @@ export default function TransactionsPage() {
       case 'dana': return 'Dana';
       case 'debit': return 'Debit';
       case 'kredit': return 'Kredit';
+      case 'transfer': return 'TF Bank';
       default: return m.toUpperCase();
     }
   };

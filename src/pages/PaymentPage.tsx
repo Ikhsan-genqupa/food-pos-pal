@@ -78,7 +78,7 @@ export default function PaymentPage() {
                 <CardHeader className="bg-primary text-primary-foreground p-8">
                   <div className="flex items-center gap-3 mb-2">
                     <Building2 className="h-5 w-5 opacity-70" />
-                    <span className="text-xs font-black uppercase tracking-widest opacity-70">Transfer Bank</span>
+                    <span className="text-xs font-black uppercase tracking-widest opacity-70">TF Bank</span>
                   </div>
                   <CardTitle className="text-2xl font-black">Instruksi Pembayaran</CardTitle>
                 </CardHeader>

@@ -100,6 +100,20 @@ export default function OnlineOrders() {
     }
   };
 
+  const getPaymentLabel = (method: string | undefined | null) => {
+    switch (method) {
+      case 'tunai': return 'Tunai';
+      case 'qris': return 'QRIS';
+      case 'ovo': return 'OVO';
+      case 'gopay': return 'GoPay';
+      case 'dana': return 'Dana';
+      case 'debit': return 'Debit';
+      case 'kredit': return 'Kredit';
+      case 'transfer': return 'TF Bank';
+      default: return method || '-';
+    }
+  };
+
   const handleUpdateStatus = (id: string, status: string) => {
     updateStatus.mutate({ id, status });
   };
@@ -152,7 +166,12 @@ export default function OnlineOrders() {
               <CardHeader className="bg-muted/50 pb-4">
                 <div className="flex justify-between items-start mb-2">
                   <span className="text-[10px] font-mono font-bold text-muted-foreground tracking-tighter sm:tracking-normal">{order.transactionNumber}</span>
-                  {getStatusBadge(order.status)}
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-[9px] border-primary/20 text-primary font-black py-0 h-5 px-1.5 bg-primary/5 uppercase">
+                      {getPaymentLabel(order.paymentMethod)}
+                    </Badge>
+                    {getStatusBadge(order.status)}
+                  </div>
                 </div>
                 <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                   <User className="h-4 w-4 text-primary shrink-0" />

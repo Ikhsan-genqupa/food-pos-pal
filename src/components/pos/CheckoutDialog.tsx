@@ -57,6 +57,7 @@ export default function CheckoutDialog({
       paymentMethod: paymentMethod,
       cashReceived: cashAmount,
       change: change,
+      status: 'completed',
       createdAt: new Date(),
     };
 
@@ -99,6 +100,7 @@ export default function CheckoutDialog({
       case 'dana': return 'Dana';
       case 'debit': return 'Debit';
       case 'kredit': return 'Kredit';
+      case 'transfer': return 'TF Bank';
       default: return method;
     }
   };

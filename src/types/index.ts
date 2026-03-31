@@ -54,7 +54,7 @@ export interface CartItem {
   quantity: number;
 }
 
-export type PaymentMethod = 'tunai' | 'qris' | 'ovo' | 'gopay' | 'dana' | 'debit' | 'kredit';
+export type PaymentMethod = 'tunai' | 'qris' | 'ovo' | 'gopay' | 'dana' | 'debit' | 'kredit' | 'transfer';
 
 export interface Transaction {
   id: string;

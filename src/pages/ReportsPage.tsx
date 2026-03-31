@@ -97,6 +97,7 @@ export default function ReportsPage() {
       case 'dana': return 'Dana';
       case 'debit': return 'Debit';
       case 'kredit': return 'Kredit';
+      case 'transfer': return 'TF Bank';
       default: return m.toUpperCase();
     }
   };
@@ -731,6 +732,7 @@ export default function ReportsPage() {
                 <SelectItem value="dana">Dana</SelectItem>
                 <SelectItem value="debit">Debit</SelectItem>
                 <SelectItem value="kredit">Kredit</SelectItem>
+                <SelectItem value="transfer">TF Bank</SelectItem>
               </SelectContent>
             </Select>
           </div>
