@@ -93,15 +93,16 @@ export default function AdminOnlineOrders() {
 
       if (waError) {
         console.error('WA Notification Error:', waError);
+        // Tetap anggap sukses karena stok sudah terpotong (Atomik)
         toast({
-          title: "Pembayaran Terverifikasi",
-          description: "Pesanan diverifikasi, namun notifikasi WA gagal terkirim.",
+          title: "Berhasil Verifikasi!",
+          description: "Pesanan diverifikasi & stok dipotong, namun notifikasi WA gagal terkirim (Error 400).",
           variant: "default",
         });
       } else {
         toast({
           title: "Berhasil!",
-          description: "Pembayaran terverifikasi & Struk WA terkirim.",
+          description: "Pembayaran terverifikasi, stok dipotong, & Struk WA terkirim.",
           variant: "default",
         });
       }
