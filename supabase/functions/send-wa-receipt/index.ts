@@ -34,6 +34,8 @@ serve(async (req) => {
     } = body;
 
     const fonnteToken = Deno.env.get("FONNTE_API_TOKEN");
+    console.log("FONNTE_TOKEN exists:", !!fonnteToken, fonnteToken ? `(Starts with: ${fonnteToken.substring(0, 4)}...)` : "(MISSING)");
+
     if (!fonnteToken) {
       console.error("FONNTE_API_TOKEN tidak ditemukan!");
       return new Response(JSON.stringify({ 
@@ -41,17 +43,36 @@ serve(async (req) => {
         reason: "FONNTE_API_TOKEN is not set in environment variables." 
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
+        status: 400, // Return 400 so waError is non-null
       });
     }
 
-    // Nomor HP ke format 62...
+    // Sanitasi nomor HP: hapus spasi, -, +, dll.
     let target = customerPhone ? customerPhone.replace(/[^0-9]/g, '') : '';
-    if (target.startsWith('0')) {
-      target = '62' + target.substring(1);
-    } else if (target && !target.startsWith('62')) {
-      target = '62' + target;
+    console.log("Nomor HP asli:", customerPhone);
+    console.log("Nomor HP setelah cleaning (hanya angka):", target);
+
+    if (!target) {
+       return new Response(JSON.stringify({ 
+        status: false, 
+        reason: "Nomor WhatsApp pelanggan tidak ditemukan atau tidak valid." 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
     }
+
+    // Normalisasi ke format 62
+    if (target.startsWith('0')) {
+      // 0812... -> 62812...
+      target = '62' + target.substring(1);
+    } else if (target.startsWith('8')) {
+      // 812... -> 62812...
+      target = '62' + target;
+    } 
+    // Jika dimulai dengan 62 (62812...), biarkan saja.
+
+    console.log("Target Fonnte (final):", target);
 
     const now = new Date();
     const dateStr = new Intl.DateTimeFormat('id-ID', { 

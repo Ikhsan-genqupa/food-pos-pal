@@ -102,13 +102,13 @@ export default function AdminOnlineOrders() {
         // Tetap anggap sukses karena stok sudah terpotong (Atomik)
         toast({
           title: "Berhasil Verifikasi!",
-          description: "Pesanan diverifikasi & stok dipotong, namun notifikasi WA gagal terkirim (Error 400).",
+          description: `Pesanan diverifikasi & stok terpotong, namun Notifikasi WA gagal dikirim (${waError.message}).`,
           variant: "default",
         });
       } else {
         toast({
-          title: "Berhasil!",
-          description: "Pembayaran terverifikasi, stok dipotong, & Struk WA terkirim.",
+          title: "Selesai!",
+          description: "Pesanan diverifikasi & stok terpotong. Notifikasi WA dikirim!",
           variant: "default",
         });
       }
