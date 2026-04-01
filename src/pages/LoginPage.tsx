@@ -30,9 +30,19 @@ export default function LoginPage() {
     setError('');
     setIsLoading(true);
 
-    // Try multiple domains for backward compatibility
-    const cleanUsername = username.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const domains = [INTERNAL_DOMAIN, '@genqupa.internal'];
+    // Determine if input is already an email or a username
+    const isEmail = username.includes('@');
+    let domains: string[] = [];
+    let cleanUsername = '';
+
+    if (isEmail) {
+      domains = ['']; // No suffix needed
+      cleanUsername = username.trim();
+    } else {
+      // Clean username for internal accounts (alnum only)
+      cleanUsername = username.toLowerCase().replace(/[^a-z0-9]/g, '');
+      domains = [INTERNAL_DOMAIN, '@genqupa.internal', '@genqupa.com'];
+    }
 
     let lastResult: { success: boolean; error?: string } = { success: false, error: 'ID atau kata sandi salah' };
 

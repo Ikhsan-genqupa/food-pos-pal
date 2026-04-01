@@ -507,7 +507,7 @@ export default function OrderPage() {
                     </div>
                   </div>
                   <div className="stat-card border-none bg-emerald-50/50 p-8 rounded-3xl">
-                    <h3 className="text-xl font-black text-emerald-900 mb-4">Kelola Ambil Pesanan</h3>
+                    <h3 className="text-xl font-black text-emerald-900 mb-4">Kelola Pemesanan Online</h3>
                     <p className="text-sm text-emerald-700/70 mb-6 font-medium">Verifikasi fisik saat pelanggan mengambil pesanan Online (BOPIS).</p>
                     <div className="space-y-3">
                        {["Terima notifikasi pesanan baru", "Klik Terima & Proses", "Klik Selesai jika pesanan sudah selesai diambil pemesan"].map((t, i) => (
