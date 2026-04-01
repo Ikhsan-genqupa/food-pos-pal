@@ -53,6 +53,14 @@ export default function DashboardPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
+  // Redirect kitchen role to /kitchen dashboard
+  const isKitchen = user?.role === 'kitchen';
+  React.useEffect(() => {
+    if (isKitchen) {
+      navigate('/kitchen', { replace: true });
+    }
+  }, [isKitchen, navigate]);
+
   // Sync selected outlet with user profile once loaded
   React.useEffect(() => {
     if (!isAdmin && user?.outletId) {

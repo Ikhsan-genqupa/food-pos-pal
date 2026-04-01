@@ -36,8 +36,6 @@ export default function KitchenDashboard() {
 
   // Real-time listener
   useEffect(() => {
-    if (!user?.outletId) return;
-
     const channel = supabase
       .channel('kitchen-orders')
       .on(
@@ -46,7 +44,7 @@ export default function KitchenDashboard() {
           event: '*', // Listen to all events to be safe
           schema: 'public',
           table: 'transactions',
-          filter: `outlet_id=eq.${user.outletId}`
+          filter: user?.outletId ? `outlet_id=eq.${user.outletId}` : undefined
         },
         (payload) => {
           const newStatus = payload.new ? (payload.new as any).status : null;

@@ -12,7 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOutlets } from '@/hooks/useOutlets';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { UserPlus, AlertCircle, CheckCircle, Users, Shield, Store, RefreshCw, Trash2, KeyRound, MoreHorizontal, Pencil, Search, Download } from 'lucide-react';
+import { UserPlus, AlertCircle, CheckCircle, Users, Shield, Store, RefreshCw, Trash2, KeyRound, MoreHorizontal, Pencil, Search, Download, ChefHat } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface UserItem {
@@ -32,7 +32,7 @@ export default function UsersPage() {
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'outlet' | 'kasir' | 'admin'>('outlet');
+  const [role, setRole] = useState<'outlet' | 'kasir' | 'admin' | 'kitchen'>('outlet');
   const [outletId, setOutletId] = useState('none');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -54,7 +54,7 @@ export default function UsersPage() {
 
   // Edit user state
   const [editTarget, setEditTarget] = useState<UserItem | null>(null);
-  const [editRole, setEditRole] = useState<'outlet' | 'kasir' | 'admin'>('outlet');
+  const [editRole, setEditRole] = useState<'outlet' | 'kasir' | 'admin' | 'kitchen'>('outlet');
   const [editOutletId, setEditOutletId] = useState('none');
   
   // Search and Filter state
@@ -237,6 +237,8 @@ export default function UsersPage() {
         return <Badge className="bg-primary/10 text-primary border-primary/20"><Shield className="h-3 w-3 mr-1" />Admin</Badge>;
       case 'kasir':
         return <Badge variant="secondary"><Users className="h-3 w-3 mr-1" />Kasir</Badge>;
+      case 'kitchen':
+        return <Badge className="bg-orange-100 text-orange-700 border-orange-200"><ChefHat className="h-3 w-3 mr-1" />Dapur</Badge>;
       default:
         return <Badge variant="outline"><Store className="h-3 w-3 mr-1" />Outlet</Badge>;
     }
@@ -307,6 +309,7 @@ export default function UsersPage() {
                   <SelectItem value="all">Semua Role</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="kasir">Kasir</SelectItem>
+                  <SelectItem value="kitchen">Dapur</SelectItem>
                   <SelectItem value="outlet">Outlet</SelectItem>
                 </SelectContent>
               </Select>
@@ -415,18 +418,19 @@ export default function UsersPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
-                <Select value={role} onValueChange={(v: 'outlet' | 'kasir' | 'admin') => setRole(v)}>
+                <Select value={role} onValueChange={(v: 'outlet' | 'kasir' | 'admin' | 'kitchen') => setRole(v)}>
                   <SelectTrigger><SelectValue placeholder="Pilih role" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="outlet"><div className="flex items-center gap-2"><Store className="h-4 w-4" />Outlet</div></SelectItem>
                     <SelectItem value="kasir"><div className="flex items-center gap-2"><Users className="h-4 w-4" />Kasir</div></SelectItem>
+                    <SelectItem value="kitchen"><div className="flex items-center gap-2"><ChefHat className="h-4 w-4" />Dapur</div></SelectItem>
                     <SelectItem value="admin"><div className="flex items-center gap-2"><Shield className="h-4 w-4" />Admin</div></SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="outlet">Outlet (Opsional)</Label>
+                <Label htmlFor="outlet">Pilih Outlet { (role === 'kasir' || role === 'kitchen' || role === 'outlet') && <span className="text-destructive">*</span> }</Label>
                 <Select value={outletId || "none"} onValueChange={(v) => setOutletId(v === "none" ? "" : v)}>
                   <SelectTrigger><SelectValue placeholder="Pilih outlet" /></SelectTrigger>
                   <SelectContent>
@@ -473,6 +477,13 @@ export default function UsersPage() {
               <div>
                 <p className="font-medium">Outlet</p>
                 <p className="text-sm text-muted-foreground">Role default. Akses terbatas ke dashboard dan stok outlet sendiri.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
+              <ChefHat className="h-5 w-5 text-primary mt-0.5" />
+              <div>
+                <p className="font-medium">Dapur</p>
+                <p className="text-sm text-muted-foreground">Akses khusus ke antrean pesanan untuk menyiapkan makanan. Tidak ada akses ke kasir, laporan, atau nominal keuangan.</p>
               </div>
             </div>
             <div className="pt-4 border-t">
@@ -544,11 +555,12 @@ export default function UsersPage() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Role</Label>
-              <Select value={editRole} onValueChange={(v: 'outlet' | 'kasir' | 'admin') => setEditRole(v)}>
+              <Select value={editRole} onValueChange={(v: 'outlet' | 'kasir' | 'admin' | 'kitchen') => setEditRole(v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="outlet"><div className="flex items-center gap-2"><Store className="h-4 w-4" />Outlet</div></SelectItem>
                   <SelectItem value="kasir"><div className="flex items-center gap-2"><Users className="h-4 w-4" />Kasir</div></SelectItem>
+                  <SelectItem value="kitchen"><div className="flex items-center gap-2"><ChefHat className="h-4 w-4" />Dapur</div></SelectItem>
                   <SelectItem value="admin"><div className="flex items-center gap-2"><Shield className="h-4 w-4" />Admin</div></SelectItem>
                 </SelectContent>
               </Select>
