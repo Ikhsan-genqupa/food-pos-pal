@@ -1,7 +1,9 @@
-
 -- 1. Fix Transactions RLS (Public Access)
 DROP POLICY IF EXISTS "Select transactions based on outlet" ON public.transactions;
 DROP POLICY IF EXISTS "Insert transactions based on outlet" ON public.transactions;
+DROP POLICY IF EXISTS "Enable read for all" ON public.transactions;
+DROP POLICY IF EXISTS "Enable insert for all" ON public.transactions;
+DROP POLICY IF EXISTS "Enable update for payment proof" ON public.transactions;
 
 CREATE POLICY "Enable read for all" ON public.transactions FOR SELECT USING (true);
 CREATE POLICY "Enable insert for all" ON public.transactions FOR INSERT WITH CHECK (true);
@@ -23,6 +25,9 @@ CREATE TABLE IF NOT EXISTS public.payment_settings (
 
 -- RLS for Payment Settings
 ALTER TABLE public.payment_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public read payment settings" ON public.payment_settings;
+DROP POLICY IF EXISTS "Admin manage payment settings" ON public.payment_settings;
+
 CREATE POLICY "Public read payment settings" ON public.payment_settings FOR SELECT USING (true);
 CREATE POLICY "Admin manage payment settings" ON public.payment_settings FOR ALL TO authenticated USING (true);
 

@@ -75,7 +75,7 @@ export default function KitchenDashboard() {
 
   const handleComplete = async (id: string) => {
     try {
-      await updateStatus.mutateAsync({ id, status: 'ready_for_pickup' });
+      await updateStatus.mutateAsync({ id, status: 'completed' });
       // Invalidate/refetch is handled by mutation onSuccess
     } catch (error) {
       console.error('Failed to update status:', error);

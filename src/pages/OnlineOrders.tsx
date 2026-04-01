@@ -37,7 +37,7 @@ export default function OnlineOrders() {
 
   const onlineOrders = transactions.filter(tx => 
     tx.orderType === 'bopis' && 
-    ['verified', 'preparing', 'ready_for_pickup'].includes(tx.status)
+    ['verified', 'preparing'].includes(tx.status)
   );
 
   useEffect(() => {
@@ -95,8 +95,6 @@ export default function OnlineOrders() {
         return <Badge className="bg-green-100 text-green-700 border-green-200">Terverifikasi</Badge>;
       case 'preparing':
         return <Badge className="bg-orange-500 hover:bg-orange-600 text-white border-none text-[10px] sm:text-xs">Disiapkan</Badge>;
-      case 'ready_for_pickup':
-        return <Badge className="bg-blue-500 hover:bg-blue-600 text-white border-none text-[10px] sm:text-xs">Siap Diambil</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -218,7 +216,7 @@ export default function OnlineOrders() {
                     <ChefHat className="h-4 w-4 shrink-0" /> Terima & Proses
                   </Button>
                 )}
-                {(order.status === 'preparing' || order.status === 'ready_for_pickup') && (
+                {order.status === 'preparing' && (
                   <Button 
                     className="flex-1 gap-2 bg-green-600 hover:bg-green-700 text-white border-none text-xs sm:text-sm h-9 sm:h-10" 
                     onClick={() => handleUpdateStatus(order.id, 'completed')}
