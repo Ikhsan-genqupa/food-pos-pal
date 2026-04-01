@@ -34,47 +34,37 @@ serve(async (req) => {
       status 
     } = body;
 
-    const fonnteToken = Deno.env.get("FONNTE_API_TOKEN");
-    console.log("FONNTE_TOKEN exists:", !!fonnteToken, fonnteToken ? `(Starts with: ${fonnteToken.substring(0, 4)}...)` : "(MISSING)");
-
+    // 1. Ambil Token dari Env (Dukacita fallback jika ada perbedaan penamaan)
+    const fonnteToken = Deno.env.get("FONNTE_API_TOKEN") || Deno.env.get("FONNTE_TOKEN");
+    
     if (!fonnteToken) {
-      console.error("FONNTE_API_TOKEN tidak ditemukan!");
-      return new Response(JSON.stringify({ 
-        status: false, 
-        reason: "FONNTE_API_TOKEN is not set in environment variables." 
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400, // Return 400 so waError is non-null
-      });
-    }
-
-    // Sanitasi nomor HP: hapus spasi, -, +, dll.
-    let target = customerPhone ? customerPhone.replace(/[^0-9]/g, '') : '';
-    console.log("Nomor HP asli:", customerPhone);
-    console.log("Nomor HP setelah cleaning (hanya angka):", target);
-
-    if (!target) {
-       return new Response(JSON.stringify({ 
-        status: false, 
-        reason: "Nomor WhatsApp pelanggan tidak ditemukan atau tidak valid." 
-      }), {
+      return new Response(JSON.stringify({ error: "FONNTE_API_TOKEN is not set in Supabase Secrets." }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       });
     }
 
-    // Normalisasi ke format 62
+    // 2. Sanitasi & Normalisasi Nomor HP (Wajib format 62...)
+    let target = customerPhone ? customerPhone.replace(/[^0-9]/g, '') : '';
+    
+    if (!target) {
+       return new Response(JSON.stringify({ error: "Nomor WhatsApp tidak ditemukan/kosong." }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
+    // Aturan: 08... -> 628..., 8... -> 628..., 628... -> tetap
     if (target.startsWith('0')) {
-      // 0812... -> 62812...
       target = '62' + target.substring(1);
     } else if (target.startsWith('8')) {
-      // 812... -> 62812...
       target = '62' + target;
-    } 
-    // Jika dimulai dengan 62 (62812...), biarkan saja.
+    }
 
-    console.log("Target Fonnte (final):", target);
+    console.log(`Pembersihan Target: ${customerPhone} -> ${target}`);
 
+    // ... (logic for date formatting and message)
+    // (Keeping existing message construction logic)
     const now = new Date();
     const dateStr = new Intl.DateTimeFormat('id-ID', { 
       dateStyle: 'medium', 
@@ -118,38 +108,52 @@ Klik link di bawah ini untuk melihat nota digital dan status pesanan:
 ${appUrl || 'https://pos.genqupa.com'}/nota/${transactionId || ''}
 `.trim();
 
-    console.log("Mengirim ke Fonnte Target:", target);
-    
-    const fonnteResponse = await fetch("https://api.fonnte.com/send", {
-      method: "POST",
-      headers: {
-        "Authorization": fonnteToken,
-      },
-      body: new URLSearchParams({
-        target: target,
-        message: message,
-      }),
-    });
+    // 3. Hit Fonnte dengan Error Handling yang Baik
+    try {
+      const fonnteResponse = await fetch("https://api.fonnte.com/send", {
+        method: "POST",
+        headers: { "Authorization": fonnteToken },
+        body: new URLSearchParams({ target, message }),
+      });
 
-    const result = await fonnteResponse.json().catch(() => ({ status: false, msg: "Parse error" }));
-    console.log("Respon Fonnte:", JSON.stringify(result));
+      const responseText = await fonnteResponse.text();
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (e) {
+        result = { status: false, msg: responseText };
+      }
 
-    return new Response(JSON.stringify({
-      status: true,
-      fonnte: result
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+      if (!fonnteResponse.ok || result.status === false) {
+        console.error("Fonnte Error Detail:", responseText);
+        return new Response(JSON.stringify({ 
+          error: result.msg || "Gagal mengirim pesan via Fonnte",
+          detail: result
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        });
+      }
+
+      console.log("WhatsApp Berhasil Terkirim:", JSON.stringify(result));
+      return new Response(JSON.stringify({ status: true, fonnte: result }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+
+    } catch (fetchError: any) {
+      console.error("Fetch Exception:", fetchError.message);
+      return new Response(JSON.stringify({ error: "Internal Fetch Error: " + fetchError.message }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      });
+    }
 
   } catch (error: any) {
-    console.error("Critical Error:", error.message);
-    return new Response(JSON.stringify({ 
-      status: false, 
-      reason: error.message 
-    }), {
+    console.error("Critical Exception:", error.message);
+    return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
+      status: 500,
     });
   }
 });
