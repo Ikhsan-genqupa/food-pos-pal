@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import logo from '@/assets/logo.png';
@@ -26,6 +26,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
+  const navigate = useNavigate();
   const { user, logout, isAdmin } = useAuth();
   const { pendingVerificationCount } = useNotifications();
 
@@ -141,7 +142,10 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
           {/* Logout */}
           <div className="p-3 border-t border-sidebar-border">
             <button
-              onClick={logout}
+              onClick={async () => {
+                await logout();
+                navigate('/', { replace: true });
+              }}
               className="nav-link w-full text-sm text-sidebar-foreground/70 hover:text-destructive"
             >
               <LogOut className="h-4 w-4" />
