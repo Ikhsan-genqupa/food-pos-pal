@@ -69,6 +69,7 @@ export const NotificationListener: React.FC = () => {
     
     // 2. Show Toast
     toast.info('ADA PESANAN BARU! MENUNGGU BUKTI PEMBAYARAN', {
+      id: `order-${order.id}`, // Unique ID based on order to allow replacement
       description: `${order.customer_name || 'Pelanggan'} • ${formatCurrency(order.total)}`,
       icon: <ShoppingBag className="h-5 w-5 text-slate-500" />,
       duration: 8000,
@@ -91,6 +92,7 @@ export const NotificationListener: React.FC = () => {
 
     // 2. Show Toast
     toast.success('SUDAH UPLOAD BUKTI TF!', {
+      id: `order-${order.id}`, // Replaces the 'New Order' toast if it exists
       description: `Perlu Verifikasi Pembayaran - ${order.customer_name || 'Pelanggan'}`,
       icon: <Bell className="h-5 w-5 text-orange-600" />,
       duration: 10000,
@@ -105,13 +107,11 @@ export const NotificationListener: React.FC = () => {
   };
 
   const handleOrderVerified = (order: any) => {
-    // Stage 2: Action for Kasir, Confirmation for Admin
-    if (user?.role === 'admin' || user?.role === 'kasir') {
+    // Stage 2: Action for Kasir ONLY (Admin already knows they verified it)
+    if (user?.role === 'kasir') {
       
-      // Play sound ONLY for Kasir via centralized context
-      if (user.role === 'kasir') {
-        playNotificationSound();
-      }
+      // Play sound via centralized context
+      playNotificationSound();
 
       toast.success('PESANAN ONLINE MASUK!', {
         description: `Pembayaran Terverifikasi, Silakan Diproses (TRX: ${order.transaction_number})`,
