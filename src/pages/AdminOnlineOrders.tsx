@@ -162,9 +162,9 @@ export default function AdminOnlineOrders() {
                       variant={order.status === 'awaiting_verification' ? "outline" : "destructive"} 
                       className={cn("animate-pulse", order.status === 'awaiting_verification' && "bg-amber-100 text-amber-700 border-amber-200")}
                     >
-                      {order.status === 'awaiting_verification' ? "Awaiting Verification" : "Awaiting Payment"}
+                      {order.status === 'awaiting_verification' ? "Need Verification" : "Awaiting Payment"}
                     </Badge>
-                    <Badge variant="outline" className="text-[9px] border-primary/20 text-primary font-black py-0 h-4 px-1.5 bg-primary/5 uppercase">
+                    <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary border-primary/20 font-black px-2 py-0.5 uppercase tracking-wider">
                       {getPaymentLabel(order.paymentMethod)}
                     </Badge>
                   </div>

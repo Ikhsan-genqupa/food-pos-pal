@@ -21,6 +21,7 @@ import KitchenDashboard from "@/pages/KitchenDashboard";
 import OrderPage from "@/pages/OrderPage";
 import PaymentPage from "@/pages/PaymentPage";
 import PublicReceipt from "@/pages/PublicReceipt";
+import PaymentSettingsPage from "@/pages/PaymentSettingsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
                 <Route path="/transactions" element={<TransactionsPage />} />
                 <Route path="/outlets" element={<OutletsPage />} />
                 <Route path="/reports" element={<ReportsPage />} />
+                <Route path="/payment-settings" element={<PaymentSettingsPage />} />
                 <Route path="/online-orders" element={<OnlineOrders />} />
                 <Route path="/verify-payments" element={<AdminOnlineOrders />} />
                 <Route path="/users" element={<UsersPage />} />

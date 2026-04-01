@@ -15,7 +15,8 @@ import {
   Users,
   ShoppingBag,
   ShieldCheck,
-  ChefHat
+  ChefHat,
+  CreditCard
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
     { to: '/stock', icon: Package, label: 'Stok' },
     { to: '/transactions', icon: History, label: 'Transaksi' },
     { to: '/reports', icon: BarChart3, label: 'Laporan' },
+    { to: '/payment-settings', icon: CreditCard, label: 'Pengaturan Pembayaran' },
   ];
 
   const outletLinks = [

@@ -69,7 +69,7 @@ export function useTransactions(outletId?: string) {
           id: t.outlets.id,
           name: t.outlets.name,
           branchNumber: t.outlets.branch_number,
-          address: '',
+          address: t.outlets.address || '',
           personInCharge: '',
           username: '',
           createdAt: new Date(),
@@ -435,7 +435,7 @@ export function useTransaction(id?: string) {
           id: data.outlets.id,
           name: data.outlets.name,
           branchNumber: data.outlets.branch_number,
-          address: '',
+          address: data.outlets.address || '',
           personInCharge: '',
           username: '',
           createdAt: new Date(),
@@ -472,7 +472,7 @@ export function useUploadPaymentProof() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, file }: { id: string, file: File }) => {
+    mutationFn: async ({ id, file, paymentMethod }: { id: string, file: File, paymentMethod?: string }) => {
       // 1. Upload to storage
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
@@ -493,6 +493,7 @@ export function useUploadPaymentProof() {
         .update({ 
           payment_proof_url: publicUrl,
           status: 'awaiting_verification',
+          ...(paymentMethod && { payment_method: paymentMethod })
         })
         .eq('id', id)
         .select()
