@@ -79,6 +79,9 @@ export default function AdminOnlineOrders() {
       await verifyOrder.mutateAsync(order);
 
       // Tahap 5: Send WA Notification via Edge Function
+      const { data: sessionData } = await supabase.auth.getSession();
+      const session = sessionData.session;
+
       const { error: waError } = await supabase.functions.invoke('send-wa-receipt', {
         body: {
           customerName: order.customerName,
@@ -94,6 +97,9 @@ export default function AdminOnlineOrders() {
           outletAddress: order.outlet?.address,
           cashierName: user?.email,
           status: order.status
+        },
+        headers: {
+          Authorization: `Bearer ${session?.access_token || ''}`
         }
       });
 
