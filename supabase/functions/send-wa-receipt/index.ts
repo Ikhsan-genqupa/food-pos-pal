@@ -34,34 +34,39 @@ serve(async (req) => {
       status 
     } = body;
 
-    // 1. Ambil Token dari Env (Dukacita fallback jika ada perbedaan penamaan)
-    const fonnteToken = Deno.env.get("FONNTE_API_TOKEN") || Deno.env.get("FONNTE_TOKEN");
+    // 1. Ambil Token dari Env (Sesuai instruksi User: FONNTE_TOKEN)
+    const fonnteToken = Deno.env.get("FONNTE_TOKEN");
     
     if (!fonnteToken) {
-      return new Response(JSON.stringify({ error: "FONNTE_API_TOKEN is not set in Supabase Secrets." }), {
+      return new Response(JSON.stringify({ error: "FONNTE_TOKEN tidak ditemukan di Supabase Secrets." }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       });
     }
 
-    // 2. Sanitasi & Normalisasi Nomor HP (Wajib format 62...)
+    // 2. Sanitasi & Normalisasi Nomor HP (Wajib format Internasional 62...)
+    // Hapus semua karakter non-angka (spasi, strip, tanda plus).
     let target = customerPhone ? customerPhone.replace(/[^0-9]/g, '') : '';
     
     if (!target) {
-       return new Response(JSON.stringify({ error: "Nomor WhatsApp tidak ditemukan/kosong." }), {
+       return new Response(JSON.stringify({ error: "Nomor WhatsApp pelanggan kosong atau tidak valid." }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       });
     }
 
-    // Aturan: 08... -> 628..., 8... -> 628..., 628... -> tetap
+    // Aturan Sanitasi:
+    // Jika diawali angka 0 (contoh 0812...), ganti menjadi 62812...
+    // Jika diawali angka 8 (contoh 812...), tambahkan 62 di depannya (62812...)
     if (target.startsWith('0')) {
       target = '62' + target.substring(1);
     } else if (target.startsWith('8')) {
       target = '62' + target;
     }
-
-    console.log(`Pembersihan Target: ${customerPhone} -> ${target}`);
+    
+    // Jika sudah dimulai dengan 62 (contoh 62812...), biarkan saja.
+    
+    console.log(`Sanitasi Selesai: ${customerPhone} -> ${target}`);
 
     // ... (logic for date formatting and message)
     // (Keeping existing message construction logic)
