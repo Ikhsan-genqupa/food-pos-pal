@@ -50,7 +50,8 @@ import {
   ShieldCheck,
   ChefHat,
   Monitor,
-  Smartphone
+  Smartphone,
+  AlertCircle
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
@@ -72,6 +73,7 @@ export default function OrderPage() {
   // Form State
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [phoneError, setPhoneError] = useState('');
   const [selectedOutlet, setSelectedOutlet] = useState('');
   const [pickupTime, setPickupTime] = useState('');
   const navigate = useNavigate();
@@ -87,6 +89,14 @@ export default function OrderPage() {
     
     if (items.length === 0) {
       toast({ title: "Keranjang Kosong", description: "Pilih menu terlebih dahulu", variant: "destructive" });
+      return;
+    }
+
+    // Phone validation
+    const phoneDigits = customerPhone.replace(/\D/g, '');
+    if (phoneDigits.length < 9 || phoneDigits.length > 14) {
+      setPhoneError('Nomor HP harus 9-14 digit dan hanya angka saja.');
+      toast({ title: "Nomor HP Tidak Valid", description: "Format nomor HP harus benar agar bisa dihubungi.", variant: "destructive" });
       return;
     }
 
@@ -297,13 +307,31 @@ export default function OrderPage() {
                 </Label>
                 <Input 
                   id="phone" 
-                  placeholder="0812xxxxxx" 
-                  type="tel" 
+                  placeholder="Contoh: 08123456789" 
+                  type="text" 
                   required 
                   value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
-                  className="rounded-2xl h-14 bg-muted/50 border-none shadow-inner text-base font-medium px-5"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setCustomerPhone(val);
+                    if (/[^0-9+]/.test(val)) {
+                      setPhoneError('Jangan gunakan spasi atau tanda hubung (-). Sesuai kaidah: hanya angka.');
+                    } else if (val.length > 0 && !val.startsWith('0') && !val.startsWith('6') && !val.startsWith('+')) {
+                      setPhoneError('Nomor HP biasanya dimulai dengan 0 atau 62.');
+                    } else {
+                      setPhoneError('');
+                    }
+                  }}
+                  className={cn(
+                    "rounded-2xl h-14 bg-muted/50 border-none shadow-inner text-base font-medium px-5 transition-all",
+                    phoneError && "ring-2 ring-destructive"
+                  )}
                 />
+                {phoneError && (
+                  <p className="text-[10px] text-destructive font-bold flex items-center gap-1 animate-in fade-in slide-in-from-top-1 duration-300">
+                    <AlertCircle className="h-3 w-3" /> {phoneError}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -408,7 +436,7 @@ export default function OrderPage() {
           <Tabs defaultValue="pelanggan" className="w-full">
             <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-slate-100/50 p-2 rounded-2xl h-auto mb-10 gap-2">
               <TabsTrigger value="pelanggan" className="rounded-xl py-3 font-bold gap-2 data-[state=active]:bg-white data-[state=active]:shadow-lg">
-                <Smartphone className="h-4 w-4" /> Pelanggan
+                <Smartphone className="h-4 w-4" /> Pemesanan Online
               </TabsTrigger>
               <TabsTrigger value="admin" className="rounded-xl py-3 font-bold gap-2 data-[state=active]:bg-white data-[state=active]:shadow-lg">
                 <ShieldCheck className="h-4 w-4" /> Administrator
@@ -417,7 +445,7 @@ export default function OrderPage() {
                 <Monitor className="h-4 w-4" /> Kasir Outlet
               </TabsTrigger>
               <TabsTrigger value="dapur" className="rounded-xl py-3 font-bold gap-2 data-[state=active]:bg-white data-[state=active]:shadow-lg">
-                <ChefHat className="h-4 w-4" /> Layar Dapur
+                <ChefHat className="h-4 w-4" /> Dapur Outlet
               </TabsTrigger>
             </TabsList>
 
@@ -425,7 +453,7 @@ export default function OrderPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {[
                   { title: "Pilih Menu", text: "Jelajahi menu lezat kami dan masukkan ke keranjang belanja Anda.", icon: "🍔" },
-                  { title: "Isi Data & Bayar", text: "Isi data diri, pilih outlet pengambilan, dan lakukan transfer bank.", icon: "💳" },
+                  { title: "Isi Data & Bayar", text: "Isi data diri, pilih outlet pengambilan, lakukan transfer bank, dan kirim bukti pembayaran.", icon: "💳" },
                   { title: "Ambil Pesanan", text: "Upload bukti bayar, hubungi via WA, dan ambil pesanan di outlet.", icon: "🏃" }
                 ].map((step, i) => (
                   <Card key={i} className="border-none bg-white/60 p-6 rounded-3xl shadow-sm hover:shadow-xl transition-all">
@@ -498,7 +526,7 @@ export default function OrderPage() {
                   <div className="bg-orange-100 p-6 rounded-[2rem] mb-6">
                     <ChefHat className="h-16 w-16 text-orange-600" />
                   </div>
-                  <h3 className="text-2xl font-black text-slate-800 mb-4">Panduan Kitchen Display (KDS)</h3>
+                  <h3 className="text-2xl font-black text-slate-800 mb-4">Panduan Dapur Outlet (KDS)</h3>
                   <p className="text-slate-500 font-medium leading-relaxed mb-10">Layar ini khusus untuk area produksi. Tidak ada nominal uang, hanya fokus pada kecepatan dan akurasi pesanan.</p>
                   
                   <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
