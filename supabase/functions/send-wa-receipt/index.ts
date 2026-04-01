@@ -113,15 +113,22 @@ Klik link di bawah ini untuk melihat nota digital dan status pesanan:
 ${appUrl || 'https://pos.genqupa.com'}/nota/${transactionId || ''}
 `.trim();
 
-    // 3. Hit Fonnte dengan Error Handling yang Baik
+    // 3. TUNGGU proses fetch Fonnte sampai benar-benar selesai
     try {
+      console.log("Memulai Fetch ke Fonnte untuk target:", target);
+      
       const fonnteResponse = await fetch("https://api.fonnte.com/send", {
         method: "POST",
-        headers: { "Authorization": fonnteToken },
+        headers: { 
+          "Authorization": fonnteToken 
+        },
         body: new URLSearchParams({ target, message }),
       });
 
+      // WAJIB: Tunggu pembacaan respon dari Fonnte agar tidak EarlyDrop
       const responseText = await fonnteResponse.text();
+      console.log("Respon Fonnte diterima:", responseText);
+
       let result;
       try {
         result = JSON.parse(responseText);
@@ -129,8 +136,8 @@ ${appUrl || 'https://pos.genqupa.com'}/nota/${transactionId || ''}
         result = { status: false, msg: responseText };
       }
 
+      // 4. BARU kembalikan response ke frontend setelah semua proses selesai
       if (!fonnteResponse.ok || result.status === false) {
-        console.error("Fonnte Error Detail:", responseText);
         return new Response(JSON.stringify({ 
           error: result.msg || "Gagal mengirim pesan via Fonnte",
           detail: result
@@ -140,14 +147,13 @@ ${appUrl || 'https://pos.genqupa.com'}/nota/${transactionId || ''}
         });
       }
 
-      console.log("WhatsApp Berhasil Terkirim:", JSON.stringify(result));
       return new Response(JSON.stringify({ status: true, fonnte: result }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
 
     } catch (fetchError: any) {
-      console.error("Fetch Exception:", fetchError.message);
+      console.error("Fetch Fetch Error:", fetchError.message);
       return new Response(JSON.stringify({ error: "Internal Fetch Error: " + fetchError.message }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
@@ -155,7 +161,7 @@ ${appUrl || 'https://pos.genqupa.com'}/nota/${transactionId || ''}
     }
 
   } catch (error: any) {
-    console.error("Critical Exception:", error.message);
+    console.error("Critical Runtime Error:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
