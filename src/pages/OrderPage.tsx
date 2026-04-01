@@ -454,7 +454,7 @@ export default function OrderPage() {
                 {[
                   { title: "Pilih Menu", text: "Jelajahi menu lezat kami dan masukkan ke keranjang belanja Anda.", icon: "🍔" },
                   { title: "Isi Data & Bayar", text: "Isi data diri, pilih outlet pengambilan, lakukan transfer bank, dan kirim bukti pembayaran.", icon: "💳" },
-                  { title: "Ambil Pesanan", text: "Upload bukti bayar, hubungi via WA, dan ambil pesanan di outlet.", icon: "🏃" }
+                  { title: "Ambil Pesanan", text: "Datang ke outlet yang dipilih pada saat pemesanan, tunjukkan notif WA dari admin di kasir, dan ambil pesanan.", icon: "🏃" }
                 ].map((step, i) => (
                   <Card key={i} className="border-none bg-white/60 p-6 rounded-3xl shadow-sm hover:shadow-xl transition-all">
                     <div className="h-12 w-12 bg-primary/10 rounded-2xl flex items-center justify-center text-2xl mb-4">{step.icon}</div>
@@ -498,7 +498,7 @@ export default function OrderPage() {
                     <h3 className="text-xl font-black text-blue-900 mb-4">Proses Penjualan Offline</h3>
                     <p className="text-sm text-blue-700/70 mb-6 font-medium">Gunakan halaman POS untuk melayani pelanggan yang datang langsung ke toko.</p>
                     <div className="space-y-3">
-                       {["Pilih menu pesanan", "Pilih metode pembayaran (Tunai/QRIS)", "Proses transaksi & cetak struk", "Pesanan otomatis terkirim ke dapur"].map((t, i) => (
+                       {["Pilih menu pesanan", "Pilih metode pembayaran (Tunai/Non-Tunai)", "Proses transaksi & cetak struk", "Pesanan otomatis terkirim ke dapur / Selesai jika tanpa bagian dapur"].map((t, i) => (
                          <div key={i} className="flex items-center gap-3 bg-white/80 p-3 rounded-xl border border-blue-100 shadow-sm">
                            <CheckCircle2 className="h-4 w-4 text-blue-500" />
                            <span className="text-sm font-bold text-blue-800">{t}</span>
@@ -510,7 +510,7 @@ export default function OrderPage() {
                     <h3 className="text-xl font-black text-emerald-900 mb-4">Kelola Ambil Pesanan</h3>
                     <p className="text-sm text-emerald-700/70 mb-6 font-medium">Verifikasi fisik saat pelanggan mengambil pesanan Online (BOPIS).</p>
                     <div className="space-y-3">
-                       {["Terima notifikasi pesanan baru leunas", "Cek list pengambilan di menu Pesanan Online", "Serahkan pesanan sesuai Nomor Transaksi", "Update stok fisik jika diperlukan"].map((t, i) => (
+                       {["Terima notifikasi pesanan baru", "Klik Terima & Proses", "Klik Selesai jika pesanan sudah selesai diambil pemesan"].map((t, i) => (
                          <div key={i} className="flex items-center gap-3 bg-white/80 p-3 rounded-xl border border-emerald-100 shadow-sm">
                            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                            <span className="text-sm font-bold text-emerald-800">{t}</span>

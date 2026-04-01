@@ -218,16 +218,7 @@ export default function OnlineOrders() {
                     <ChefHat className="h-4 w-4 shrink-0" /> Terima & Proses
                   </Button>
                 )}
-                {order.status === 'preparing' && (
-                  <Button 
-                    className="flex-1 gap-2 bg-orange-500 hover:bg-orange-600 border-none text-xs sm:text-sm h-9 sm:h-10" 
-                    onClick={() => handleUpdateStatus(order.id, 'ready_for_pickup')}
-                    disabled={updateStatus.isPending}
-                  >
-                    <Package className="h-4 w-4 shrink-0" /> Siap
-                  </Button>
-                )}
-                {order.status === 'ready_for_pickup' && (
+                {(order.status === 'preparing' || order.status === 'ready_for_pickup') && (
                   <Button 
                     className="flex-1 gap-2 bg-green-600 hover:bg-green-700 text-white border-none text-xs sm:text-sm h-9 sm:h-10" 
                     onClick={() => handleUpdateStatus(order.id, 'completed')}
