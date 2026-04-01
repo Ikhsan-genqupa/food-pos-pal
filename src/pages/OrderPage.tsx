@@ -44,8 +44,14 @@ import {
   UtensilsCrossed,
   User,
   Phone,
-  ImagePlus
+  ImagePlus,
+  HelpCircle,
+  ShieldCheck,
+  ChefHat,
+  Monitor,
+  Smartphone
 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -388,6 +394,127 @@ export default function OrderPage() {
         </DialogContent>
       </Dialog>
 
+
+      {/* User Guide Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-24">
+        <div className="bg-white/40 backdrop-blur-xl border border-white/20 rounded-[3rem] p-8 sm:p-12 shadow-2xl">
+          <div className="text-center mb-12">
+            <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-black mb-4 px-4 py-1 uppercase tracking-widest text-[10px]">Pusat Bantuan</Badge>
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-800 tracking-tight">Panduan Penggunaan Sistem</h2>
+            <p className="text-slate-500 mt-3 font-medium">Langkah praktis menggunakan GenQuPa Food Pal untuk semua bagian.</p>
+          </div>
+
+          <Tabs defaultValue="pelanggan" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-slate-100/50 p-2 rounded-2xl h-auto mb-10 gap-2">
+              <TabsTrigger value="pelanggan" className="rounded-xl py-3 font-bold gap-2 data-[state=active]:bg-white data-[state=active]:shadow-lg">
+                <Smartphone className="h-4 w-4" /> Pelanggan
+              </TabsTrigger>
+              <TabsTrigger value="admin" className="rounded-xl py-3 font-bold gap-2 data-[state=active]:bg-white data-[state=active]:shadow-lg">
+                <ShieldCheck className="h-4 w-4" /> Administrator
+              </TabsTrigger>
+              <TabsTrigger value="kasir" className="rounded-xl py-3 font-bold gap-2 data-[state=active]:bg-white data-[state=active]:shadow-lg">
+                <Monitor className="h-4 w-4" /> Kasir Outlet
+              </TabsTrigger>
+              <TabsTrigger value="dapur" className="rounded-xl py-3 font-bold gap-2 data-[state=active]:bg-white data-[state=active]:shadow-lg">
+                <ChefHat className="h-4 w-4" /> Layar Dapur
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="pelanggan" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[
+                  { title: "Pilih Menu", text: "Jelajahi menu lezat kami dan masukkan ke keranjang belanja Anda.", icon: "🍔" },
+                  { title: "Isi Data & Bayar", text: "Isi data diri, pilih outlet pengambilan, dan lakukan transfer bank.", icon: "💳" },
+                  { title: "Ambil Pesanan", text: "Upload bukti bayar, hubungi via WA, dan ambil pesanan di outlet.", icon: "🏃" }
+                ].map((step, i) => (
+                  <Card key={i} className="border-none bg-white/60 p-6 rounded-3xl shadow-sm hover:shadow-xl transition-all">
+                    <div className="h-12 w-12 bg-primary/10 rounded-2xl flex items-center justify-center text-2xl mb-4">{step.icon}</div>
+                    <h3 className="font-black text-lg mb-2">{i+1}. {step.title}</h3>
+                    <p className="text-sm text-slate-500 leading-relaxed font-medium">{step.text}</p>
+                  </Card>
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="admin" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="bg-slate-900 text-white rounded-3xl p-8 sm:p-12 overflow-hidden relative">
+                <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                  <div>
+                    <h3 className="text-2xl font-black mb-6">Tugas Utama Administrator</h3>
+                    <ul className="space-y-4">
+                      {[
+                        "Verifikasi bukti transfer dari pelanggan & kirim struk WA.",
+                        "Pantau grafik laporan omzet real-time semua outlet.",
+                        "Kelola master data produk, kategori, dan stok pusat.",
+                        "Manajemen akun user untuk Kasir dan staf Dapur."
+                      ].map((item, i) => (
+                        <li key={i} className="flex items-start gap-4">
+                          <div className="bg-primary h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-black flex-shrink-0 mt-1">{i+1}</div>
+                          <p className="text-slate-300 text-sm font-medium">{item}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="hidden md:flex justify-center">
+                    <ShieldCheck className="h-40 w-40 text-primary/20" />
+                  </div>
+                </div>
+                <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-primary/10 rounded-full blur-3xl"></div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="kasir" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <div className="stat-card border-none bg-blue-50/50 p-8 rounded-3xl">
+                    <h3 className="text-xl font-black text-blue-900 mb-4">Proses Penjualan Offline</h3>
+                    <p className="text-sm text-blue-700/70 mb-6 font-medium">Gunakan halaman POS untuk melayani pelanggan yang datang langsung ke toko.</p>
+                    <div className="space-y-3">
+                       {["Pilih menu pesanan", "Pilih metode pembayaran (Tunai/QRIS)", "Proses transaksi & cetak struk", "Pesanan otomatis terkirim ke dapur"].map((t, i) => (
+                         <div key={i} className="flex items-center gap-3 bg-white/80 p-3 rounded-xl border border-blue-100 shadow-sm">
+                           <CheckCircle2 className="h-4 w-4 text-blue-500" />
+                           <span className="text-sm font-bold text-blue-800">{t}</span>
+                         </div>
+                       ))}
+                    </div>
+                  </div>
+                  <div className="stat-card border-none bg-emerald-50/50 p-8 rounded-3xl">
+                    <h3 className="text-xl font-black text-emerald-900 mb-4">Kelola Ambil Pesanan</h3>
+                    <p className="text-sm text-emerald-700/70 mb-6 font-medium">Verifikasi fisik saat pelanggan mengambil pesanan Online (BOPIS).</p>
+                    <div className="space-y-3">
+                       {["Terima notifikasi pesanan baru leunas", "Cek list pengambilan di menu Pesanan Online", "Serahkan pesanan sesuai Nomor Transaksi", "Update stok fisik jika diperlukan"].map((t, i) => (
+                         <div key={i} className="flex items-center gap-3 bg-white/80 p-3 rounded-xl border border-emerald-100 shadow-sm">
+                           <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                           <span className="text-sm font-bold text-emerald-800">{t}</span>
+                         </div>
+                       ))}
+                    </div>
+                  </div>
+               </div>
+            </TabsContent>
+
+            <TabsContent value="dapur" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+               <div className="flex flex-col items-center text-center max-w-3xl mx-auto py-10">
+                  <div className="bg-orange-100 p-6 rounded-[2rem] mb-6">
+                    <ChefHat className="h-16 w-16 text-orange-600" />
+                  </div>
+                  <h3 className="text-2xl font-black text-slate-800 mb-4">Panduan Kitchen Display (KDS)</h3>
+                  <p className="text-slate-500 font-medium leading-relaxed mb-10">Layar ini khusus untuk area produksi. Tidak ada nominal uang, hanya fokus pada kecepatan dan akurasi pesanan.</p>
+                  
+                  <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+                     <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                        <p className="font-black text-orange-600 mb-1">REAL-TIME</p>
+                        <p className="text-sm text-slate-600 font-medium">Pesanan lunas & offline otomatis muncul dengan suara "Ting".</p>
+                     </div>
+                     <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                        <p className="font-black text-orange-600 mb-1">ONE CLICK</p>
+                        <p className="text-sm text-slate-600 font-medium">Klik "SELESAI" untuk memindahkan ke status Siap Ambil.</p>
+                     </div>
+                  </div>
+               </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </section>
 
       {/* Footer / Staff Login */}
       <footer className="mt-20 py-10 border-t border-border/40 text-center">
