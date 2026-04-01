@@ -544,8 +544,9 @@ export default function ReportsPage() {
     const productLegendItems = productData.map(item => {
       const pct = totalProd > 0 ? Math.round((item.value / totalProd) * 100) : 0;
       const rupiah = `Rp${item.value.toLocaleString('id-ID')}`;
+      const dotSvg = `<svg width="8" height="8" style="vertical-align: middle; margin-right: 4px;"><circle cx="4" cy="4" r="4" fill="${item.color}"/></svg>`;
       return `<div class="legend-item">
-        <div class="legend-color" style="background:${item.color};"></div>
+        ${dotSvg}
         <span>${item.name} – ${item.quantity} terjual &middot; ${rupiah} (${pct}%)</span>
       </div>`;
     }).join('');
@@ -557,8 +558,9 @@ export default function ReportsPage() {
       const rupiah = item.name === 'Online'
         ? `Rp${totalOnlineRevenue.toLocaleString('id-ID')}`
         : `Rp${totalOfflineRevenue.toLocaleString('id-ID')}`;
+      const dotSvg = `<svg width="8" height="8" style="vertical-align: middle; margin-right: 4px;"><circle cx="4" cy="4" r="4" fill="${item.color}"/></svg>`;
       return `<div class="legend-item">
-        <div class="legend-color" style="background:${item.color};"></div>
+        ${dotSvg}
         <span>${item.name} – ${pct}% &middot; ${rupiah}</span>
       </div>`;
     }).join('');
@@ -585,6 +587,8 @@ export default function ReportsPage() {
             background: white;
             line-height: 1.4;
             font-size: 9px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
           }
 
           /* ── Header ── */
@@ -640,6 +644,7 @@ export default function ReportsPage() {
           .legend-item span { white-space: nowrap; }
           .legend-dot {
             width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+            -webkit-print-color-adjust: exact; print-color-adjust: exact;
           }
 
           /* ── Section title ── */

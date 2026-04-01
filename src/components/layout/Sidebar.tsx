@@ -14,7 +14,8 @@ import {
   X,
   Users,
   ShoppingBag,
-  ShieldCheck
+  ShieldCheck,
+  ChefHat
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,10 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/stock', icon: Package, label: 'Stok' },
   ];
+  
+  const kitchenLinks = [
+    { to: '/kitchen', icon: ChefHat, label: 'Dapur' },
+  ];
 
   const cashierLinks = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -58,6 +63,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
       case 'admin': return adminLinks;
       case 'kasir': return cashierLinks;
       case 'outlet': return outletLinks;
+      case 'kitchen': return kitchenLinks;
       default: return [];
     }
   };
