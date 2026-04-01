@@ -60,29 +60,38 @@ serve(async (req) => {
       timeZone: 'Asia/Jakarta' 
     }).format(now);
 
-    const message = `
-*[${outletName || 'GenQuPa Food Pal'}]*
-${outletAddress || 'Solusi Bisnis Kuliner Anda'}
-====================
-Tanggal : ${dateStr} WIB
-No Nota : ${transactionNumber || '-'}
-Kasir   : ${cashierName || 'Sistem POS'}
-Nama    : ${customerName || 'Pelanggan'}
-====================
+    const pickupDate = pickupTime ? new Date(pickupTime) : null;
+    const pickupStr = pickupDate ? new Intl.DateTimeFormat('id-ID', { 
+      weekday: 'long',
+      day: '2-digit', 
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Asia/Jakarta' 
+    }).format(pickupDate).replace('.', ':') + ' WIB' : '-';
 
-Tipe Layanan : ${orderSource === 'online' ? 'Online Order' : 'Offline POS'}
-Pesanan:
+    const message = `
+Halo ${customerName || 'Pelanggan'}, pembayaran Anda telah berhasil kami verifikasi! ✨
+
+Detail Pesanan:
+📌 No. Transaksi: ${transactionNumber || '-'}
+📍 Sumber Pesanan: Online (Aplikasi)
+🍴 Menu:
 ${Array.isArray(items) ? items.map((i: string) => `- ${i}`).join('\n') : '-'}
 
-====================
-Total Tagihan = Rp ${total?.toLocaleString('id-ID') || '0'}
-Status : ${status === 'awaiting_payment' ? 'BELUM LUNAS' : 'LUNAS'}
-====================
-PERHATIAN!! 
-1. Harap periksa pesanan sebelum meninggalkan outlet.
-2. Makanan yang sudah dibeli tidak dapat ditukar atau dikembalikan.
-3. Tunjukkan nota ini saat pengambilan pesanan.
-====================
+💰 Total Tagihan: Rp ${total?.toLocaleString('id-ID') || '0'}
+
+🕒 Waktu Pengambilan:
+${pickupStr}
+
+📍 Lokasi Pengambilan:
+${outletName || 'GenQuPa Food Pal'} - ${outletAddress || 'Alamat Outlet'}
+
+Silakan tunjukkan pesan ini saat mengambil pesanan di outlet pilihan Anda. 
+Terima kasih telah memesan di GenQuPa Food Pal! 🍔🍟
+
+--------------------
 Klik link di bawah ini untuk melihat nota digital dan status pesanan:
 ${appUrl || 'https://pos.genqupa.com'}/nota/${transactionId || ''}
 `.trim();

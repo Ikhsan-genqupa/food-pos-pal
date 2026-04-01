@@ -58,8 +58,6 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
     { to: '/pos', icon: ShoppingCart, label: 'Penjualan' },
     { to: '/online-orders', icon: ShoppingBag, label: 'Pesanan Online' },
     { to: '/transactions', icon: History, label: 'Transaksi' },
-    { to: '/reports', icon: BarChart3, label: 'Laporan' },
-    { to: '/kitchen', icon: ChefHat, label: 'Dapur' },
   ];
 
   const getLinks = () => {

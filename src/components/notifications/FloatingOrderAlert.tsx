@@ -61,7 +61,7 @@ export const FloatingOrderAlert: React.FC = () => {
             <h3 className="font-black text-lg leading-tight uppercase tracking-widest">
               {isVerifiedType && "ADA PESANAN ONLINE"}
               {isUploadType && "SUDAH UPLOAD BUKTI TF!"}
-              {isNewType && "ADA PESANAN BARU!"}
+              {isNewType && "ADA PESANAN BARU! MENUNGGU BUKTI PEMBAYARAN"}
             </h3>
             <p className={cn(
               "text-sm font-bold mt-1",

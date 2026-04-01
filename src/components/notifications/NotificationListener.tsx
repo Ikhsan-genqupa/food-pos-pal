@@ -68,7 +68,7 @@ export const NotificationListener: React.FC = () => {
     // 1. SILENT for Stage 1 (as requested, only Stage 2 has sound)
     
     // 2. Show Toast
-    toast.info('ADA PESANAN BARU!', {
+    toast.info('ADA PESANAN BARU! MENUNGGU BUKTI PEMBAYARAN', {
       description: `${order.customer_name || 'Pelanggan'} • ${formatCurrency(order.total)}`,
       icon: <ShoppingBag className="h-5 w-5 text-slate-500" />,
       duration: 8000,
