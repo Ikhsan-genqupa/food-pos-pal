@@ -20,6 +20,7 @@ import AdminOnlineOrders from "@/pages/AdminOnlineOrders";
 import KitchenDashboard from "@/pages/KitchenDashboard";
 import OrderPage from "@/pages/OrderPage";
 import PaymentPage from "@/pages/PaymentPage";
+import PublicReceipt from "@/pages/PublicReceipt";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +52,7 @@ const App = () => (
                 <Route path="/kitchen" element={<KitchenDashboard />} />
               </Route>
               <Route path="/payment/:id" element={<PaymentPage />} />
+              <Route path="/nota/:id" element={<PublicReceipt />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </CartProvider>

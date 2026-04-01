@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Printer, Check, Banknote, QrCode, Wallet, CreditCard } from 'lucide-react';
+import { Printer, Check, Banknote, QrCode, Wallet, CreditCard, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface CheckoutDialogProps {
@@ -33,6 +33,8 @@ export default function CheckoutDialog({
   const [cashReceived, setCashReceived] = useState<string>('');
   const [showReceipt, setShowReceipt] = useState(false);
   const [transaction, setTransaction] = useState<Transaction | null>(null);
+  const [customerName, setCustomerName] = useState<string>('');
+  const [customerPhone, setCustomerPhone] = useState<string>('');
 
   const cashAmount = paymentMethod === 'tunai' ? (parseFloat(cashReceived) || 0) : total;
   const change = paymentMethod === 'tunai' ? (cashAmount - total) : 0;
@@ -58,6 +60,8 @@ export default function CheckoutDialog({
       cashReceived: cashAmount,
       change: change,
       status: 'completed',
+      customerName: customerName.trim() || undefined,
+      customerPhone: customerPhone.trim() || undefined,
       createdAt: new Date(),
     };
 
@@ -72,6 +76,8 @@ export default function CheckoutDialog({
     setPaymentMethod('tunai');
     setShowReceipt(false);
     setTransaction(null);
+    setCustomerName('');
+    setCustomerPhone('');
     onOpenChange(false);
   };
 
@@ -209,6 +215,39 @@ export default function CheckoutDialog({
           <div className="bg-primary/5 rounded-2xl p-6 text-center border border-primary/10">
             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Total Tagihan</p>
             <p className="text-4xl font-extrabold text-primary tracking-tight">{formatCurrency(total)}</p>
+          </div>
+
+          {/* Customer Info (Optional) */}
+          <div className="space-y-4 p-4 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
+             <div className="flex items-center gap-2 mb-1">
+               <User className="h-4 w-4 text-slate-400" />
+               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Data Pelanggan (Opsional)</Label>
+             </div>
+             <div className="grid grid-cols-2 gap-3">
+               <div className="space-y-1.5">
+                 <Label htmlFor="cust-name" className="text-[10px] font-bold text-slate-400 ml-1">Nama</Label>
+                 <Input 
+                   id="cust-name"
+                   placeholder="Budi" 
+                   className="h-9 text-xs rounded-xl border-slate-200 bg-white"
+                   value={customerName}
+                   onChange={(e) => setCustomerName(e.target.value)}
+                 />
+               </div>
+               <div className="space-y-1.5">
+                 <Label htmlFor="cust-phone" className="text-[10px] font-bold text-slate-400 ml-1">No. WhatsApp</Label>
+                 <Input 
+                   id="cust-phone"
+                   placeholder="0812..." 
+                   className="h-9 text-xs rounded-xl border-slate-200 bg-white"
+                   value={customerPhone}
+                   onChange={(e) => setCustomerPhone(e.target.value)}
+                 />
+               </div>
+             </div>
+             <p className="text-[9px] text-slate-400 italic leading-none ml-1">
+               Isi untuk mengirim Nota Digital via WA & simpan sebagai member.
+             </p>
           </div>
 
           {/* Payment Method Selector */}

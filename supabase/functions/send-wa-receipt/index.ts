@@ -17,7 +17,21 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     console.log("Data diterima:", JSON.stringify(body));
 
-    const { customerName, customerPhone, transactionNumber, total, pickupTime, items, orderSource } = body;
+    const { 
+      customerName, 
+      customerPhone, 
+      transactionNumber, 
+      total, 
+      pickupTime, 
+      items, 
+      orderSource,
+      transactionId,
+      appUrl,
+      outletName,
+      outletAddress,
+      cashierName,
+      status 
+    } = body;
 
     const fonnteToken = Deno.env.get("FONNTE_API_TOKEN");
     if (!fonnteToken) {
@@ -39,24 +53,38 @@ serve(async (req) => {
       target = '62' + target;
     }
 
+    const now = new Date();
+    const dateStr = new Intl.DateTimeFormat('id-ID', { 
+      dateStyle: 'medium', 
+      timeStyle: 'short', 
+      timeZone: 'Asia/Jakarta' 
+    }).format(now);
+
     const message = `
-*KONFIRMASI PEMBAYARAN - GENQUPA FOOD PAL*
+*[${outletName || 'GenQuPa Food Pal'}]*
+${outletAddress || 'Solusi Bisnis Kuliner Anda'}
+====================
+Tanggal : ${dateStr} WIB
+No Nota : ${transactionNumber || '-'}
+Kasir   : ${cashierName || 'Sistem POS'}
+Nama    : ${customerName || 'Pelanggan'}
+====================
 
-Halo *${customerName || 'Pelanggan'}*, pembayaran Anda telah berhasil kami verifikasi! ✨
-
-*Detail Pesanan:*
-📌 No. Transaksi: ${transactionNumber || '-'}
-📍 Sumber Pesanan: ${orderSource === 'online' ? 'Online (Aplikasi)' : 'Offline (Kasir)'}
-🍴 Menu:
+Tipe Layanan : ${orderSource === 'online' ? 'Online Order' : 'Offline POS'}
+Pesanan:
 ${Array.isArray(items) ? items.map((i: string) => `- ${i}`).join('\n') : '-'}
 
-💰 *Total Tagihan:* Rp${total?.toLocaleString('id-ID') || '0'}
-
-🕒 *Waktu Pengambilan:*
-${pickupTime ? new Intl.DateTimeFormat('id-ID', { dateStyle: 'full', timeStyle: 'short', timeZone: 'Asia/Jakarta' }).format(new Date(pickupTime)) : '-'} WIB
-
-Silakan tunjukkan pesan ini saat mengambil pesanan di outlet pilihan Anda. 
-Terima kasih telah memesan di *GenQuPa Food Pal*! 🍔🍟
+====================
+Total Tagihan = Rp ${total?.toLocaleString('id-ID') || '0'}
+Status : ${status === 'awaiting_payment' ? 'BELUM LUNAS' : 'LUNAS'}
+====================
+PERHATIAN!! 
+1. Harap periksa pesanan sebelum meninggalkan outlet.
+2. Makanan yang sudah dibeli tidak dapat ditukar atau dikembalikan.
+3. Tunjukkan nota ini saat pengambilan pesanan.
+====================
+Klik link di bawah ini untuk melihat nota digital dan status pesanan:
+${appUrl || 'https://pos.genqupa.com'}/nota/${transactionId || ''}
 `.trim();
 
     console.log("Mengirim ke Fonnte Target:", target);

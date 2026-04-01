@@ -56,6 +56,17 @@ export interface CartItem {
 
 export type PaymentMethod = 'tunai' | 'qris' | 'ovo' | 'gopay' | 'dana' | 'debit' | 'kredit' | 'transfer';
 
+export interface Customer {
+  id: string;
+  name: string;
+  phone: string;
+  membershipId?: string;
+  totalOrders: number;
+  totalSpent: number;
+  outletId?: string;
+  createdAt: Date;
+}
+
 export interface Transaction {
   id: string;
   transactionNumber: string;
@@ -75,6 +86,8 @@ export interface Transaction {
   status: 'awaiting_payment' | 'awaiting_verification' | 'verified' | 'preparing' | 'ready_for_pickup' | 'completed' | 'cancelled';
   orderSource?: 'online' | 'offline';
   paymentProofUrl?: string;
+  customerId?: string;
+  customer?: Customer;
   createdAt: Date;
 }
 

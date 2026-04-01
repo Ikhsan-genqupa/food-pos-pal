@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import { supabase } from '@/integrations/supabase/client';
 import { useActiveProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import { useStocks } from '@/hooks/useStocks';
@@ -62,8 +63,48 @@ export default function POSPage() {
       return;
     }
 
-    // Save transaction to database
-    await createTransaction.mutateAsync({
+    // Step 1: Manage Customer/Membership if data provided
+    let customerId = undefined;
+    if (transaction.customerName && transaction.customerPhone) {
+      try {
+        // Clean phone for lookup/matching
+        const cleanPhone = transaction.customerPhone.replace(/[^0-9]/g, '');
+        
+        // Check if customer exists
+        const { data: existingCustomer } = await (supabase as any)
+          .from('customers')
+          .select('id')
+          .eq('phone', cleanPhone)
+          .maybeSingle();
+
+        if (existingCustomer) {
+          customerId = existingCustomer.id;
+        } else {
+          // 4 digits phone + first word name as requested
+          const lastFour = cleanPhone.slice(-4);
+          const firstWord = transaction.customerName.split(' ')[0].toUpperCase().replace(/[^A-Z0-9]/g, '');
+          const membershipId = `${lastFour}${firstWord}`;
+
+          const { data: newCustomer, error: custError } = await (supabase as any)
+            .from('customers')
+            .insert({
+              name: transaction.customerName,
+              phone: cleanPhone,
+              outlet_id: user.outletId,
+              membership_id: membershipId
+            })
+            .select()
+            .single();
+          
+          if (!custError && newCustomer) customerId = newCustomer.id;
+        }
+      } catch (err) {
+        console.error('Error managing customer:', err);
+      }
+    }
+
+    // Step 2: Save transaction to database
+    const result = await createTransaction.mutateAsync({
       outletId: user.outletId,
       items: transaction.items,
       subtotal: transaction.subtotal,
@@ -73,7 +114,32 @@ export default function POSPage() {
       change: transaction.change,
       cashierName: user?.email,
       orderSource: 'offline',
+      customerName: transaction.customerName,
+      customerPhone: transaction.customerPhone,
+      customerId: customerId,
     });
+
+    // Step 3: Trigger WA Receipt if phone exists
+    if (transaction.customerPhone && result?.id) {
+       supabase.functions.invoke('send-wa-receipt', {
+        body: {
+          customerName: transaction.customerName,
+          customerPhone: transaction.customerPhone,
+          transactionNumber: result.transactionNumber,
+          total: transaction.total,
+          items: transaction.items.map(i => `${i.quantity}x ${i.productName}`),
+          orderSource: 'offline',
+          transactionId: result.id,
+          appUrl: window.location.origin,
+          outletName: user?.outletName,
+          outletAddress: '', // Address could be added if needed
+          cashierName: user?.email,
+          status: 'completed'
+        }
+      }).then(({ error }) => {
+        if (error) console.error('WA Notification Error:', error);
+      });
+    }
   };
 
   if (productsLoading) {

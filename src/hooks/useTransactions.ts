@@ -19,6 +19,7 @@ export interface CreateTransactionInput {
   status?: string;
   orderSource?: 'online' | 'offline';
   paymentProofUrl?: string;
+  customerId?: string;
 }
 
 export function useTransactions(outletId?: string) {
@@ -38,7 +39,8 @@ export function useTransactions(outletId?: string) {
           outlets (
             id,
             name,
-            branch_number
+            branch_number,
+            address
           ),
           transaction_items (
             id,
@@ -407,7 +409,8 @@ export function useTransaction(id?: string) {
           outlets (
             id,
             name,
-            branch_number
+            branch_number,
+            address
           ),
           transaction_items (
             id,

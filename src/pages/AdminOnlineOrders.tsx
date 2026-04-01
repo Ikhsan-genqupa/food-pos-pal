@@ -87,7 +87,13 @@ export default function AdminOnlineOrders() {
           total: order.total,
           pickupTime: order.pickupTime,
           orderSource: order.orderSource,
-          items: order.items.map((i: any) => `${i.quantity}x ${i.productName}`)
+          items: order.items.map((i: any) => `${i.quantity}x ${i.productName}`),
+          transactionId: order.id,
+          appUrl: window.location.origin,
+          outletName: order.outlet?.name,
+          outletAddress: order.outlet?.address,
+          cashierName: user?.email,
+          status: order.status
         }
       });
 
