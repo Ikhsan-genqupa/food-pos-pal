@@ -113,8 +113,8 @@ export default function AdminOnlineOrders() {
         });
       } else {
         toast({
-          title: "Selesai!",
-          description: "Pesanan diverifikasi & stok terpotong. Notifikasi WA dikirim!",
+          title: "Berhasil!",
+          description: "Pesanan diverifikasi. Notifikasi WA dikirim!",
           variant: "default",
         });
       }

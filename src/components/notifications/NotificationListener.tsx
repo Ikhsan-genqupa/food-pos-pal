@@ -107,9 +107,11 @@ export const NotificationListener: React.FC = () => {
   };
 
   const handleOrderVerified = (order: any) => {
-    // Stage 2: Action for Kasir ONLY (Admin already knows they verified it)
-    if (user?.role === 'kasir') {
-      
+    // Stage 2: HANYA untuk role kitchen atau di halaman kitchen
+    const isKitchenRole = user?.role === 'kitchen';
+    const isKitchenPage = window.location.pathname.startsWith('/kitchen');
+
+    if (isKitchenRole || isKitchenPage) {
       // Play sound via centralized context
       playNotificationSound();
 
@@ -121,7 +123,7 @@ export const NotificationListener: React.FC = () => {
         action: {
           label: 'Detail Dapur',
           onClick: () => {
-             window.location.href = '/online-orders';
+             window.location.href = '/kitchen';
           }
         }
       });

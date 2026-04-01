@@ -110,6 +110,9 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
             const oldOrder = payload.old;
             const newOrder = payload.new;
             
+            // Clear Stage 1 (New Order) alert if this order has progressed
+            setLastNewOrder(prev => (prev?.id === newOrder.id ? null : prev));
+
             if (newOrder.status === 'verified' && oldOrder.status !== 'verified') {
               if (user.role === 'admin' || user.role === 'kasir') {
                 if (user.role === 'admin' || user.outletId === newOrder.outlet_id) {
